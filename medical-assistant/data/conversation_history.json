@@ -1,0 +1,34 @@
+{
+    "default_persistent_user": [
+        {
+            "timestamp": "2025-05-26T20:02:33.348676Z",
+            "mode": "qna",
+            "user_message": "How are you?",
+            "ai_response": "Error: AI API request failed (HTTP 400)."
+        },
+        {
+            "timestamp": "2025-05-26T20:02:47.066276Z",
+            "mode": "qna",
+            "user_message": "What is cancer?",
+            "ai_response": "Error: AI API request failed (HTTP 400)."
+        },
+        {
+            "timestamp": "2025-05-26T20:03:28.977390Z",
+            "mode": "personal_symptoms",
+            "user_message": "What is cancer?",
+            "ai_response": "Error: AI API request failed (HTTP 400)."
+        },
+        {
+            "timestamp": "2025-05-26T20:24:30.873403Z",
+            "mode": "qna",
+            "user_message": "Hi",
+            "ai_response": "Error: AI API request failed (HTTP 400)."
+        },
+        {
+            "timestamp": "2025-05-26T20:24:52.785821Z",
+            "mode": "qna",
+            "user_message": "hi",
+            "ai_response": "Error: AI API request failed (HTTP 400)."
+        }
+    ]
+}

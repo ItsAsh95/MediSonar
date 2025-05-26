@@ -1,0 +1,10 @@
+{
+    "default_persistent_user": {
+        "symptoms_history": [],
+        "reports_analyzed_info": [],
+        "diagnoses_suggested": [],
+        "medications_mentioned": [],
+        "surgeries_operations": [],
+        "allergies": []
+    }
+}

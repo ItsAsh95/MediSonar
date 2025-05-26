@@ -1,0 +1,56 @@
+# Python
+venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+pip-wheel-metadata/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Environment variables
+.env
+.flaskenv
+
+# IDE / Editor specific
+.vscode/
+*.code-workspace
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.swp
+
+# Node
+node_modules/
+npm-debug.log
+
+# OS specific
+.DS_Store
+*~
+*.swp
+Thumbs.db
+
+# If you were using data/ for persistent JSON and decided against it for session-only
+# medical-assistant/data/*.json # Only if you are NOT committing example structures
+
+# Uploads directory (if it contains sensitive test data during dev)
+# medical-assistant/static/uploads/*
+# !medical-assistant/static/uploads/.gitkeep # If you want to keep the folder

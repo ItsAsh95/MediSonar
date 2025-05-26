@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Medical Assistant</title>
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', path='css/theme.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', path='css/style.css') }}">
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg">
+        <a class="navbar-brand" href="#">
+            <i class="fas fa-laptop-medical"></i> AI Medical Assistant
+        </a>
+        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav ml-auto">
+                <li class="nav-item">
+                    <button id="viewHistoryBtn" class="btn btn-outline-secondary btn-sm mr-2"><i class="fas fa-history"></i> View History</button>
+                </li>
+                <li class="nav-item">
+                    <button id="downloadChatPdfBtn" class="btn btn-outline-info btn-sm mr-2"><i class="fas fa-file-pdf"></i> Download Chat</button>
+                </li>
+                <li class="nav-item">
+                    <button id="themeToggleBtn" class="btn btn-outline-light btn-sm">
+                        <i class="fas fa-sun"></i><span class="sr-only">Toggle Theme</span>
+                    </button>
+                </li>
+            </ul>
+        </div>
+    </nav>
+
+    <div class="container-fluid mt-3 app-container">
+        <div class="row">
+            <!-- Sidebar for Mode Selection -->
+            <div class="col-md-3 sidebar">
+                <h5>Interaction Mode</h5>
+                <div class="list-group mode-selection">
+                    <button type="button" class="list-group-item list-group-item-action mode-btn active" data-mode="qna">
+                        <i class="fas fa-question-circle"></i> Medical Q&A
+                    </button>
+                    <button type="button" class="list-group-item list-group-item-action mode-btn" data-mode="personal_symptoms">
+                        <i class="fas fa-stethoscope"></i> Symptom Analyzer
+                    </button>
+                    <button type="button" class="list-group-item list-group-item-action mode-btn" data-mode="personal_report_upload">
+                        <i class="fas fa-file-medical-alt"></i> My Lab Report
+                    </button>
+                </div>
+                <div id="userRegionInputArea" class="mt-3"> 
+                    <label for="userRegionInput">Your Region (e.g., City, Country):</label>
+                    <input type="text" id="userRegionInput" class="form-control form-control-sm" placeholder="Helps with relevant schemes">
+                </div>
+            </div>
+
+            <!-- Main Chat Area -->
+            <div class="col-md-9 main-content">
+                <div id="chat-window-container">
+                    <div id="chat-window" class="border rounded p-3 mb-2">
+                        <!-- Initial Welcome Message -->
+                        <div class="message-container ai-message-outer">
+                             <div class="ai-message">
+                                <div class="avatar ai-avatar"><i class="fas fa-robot"></i></div>
+                                <div class="message-content">Hello! I'm your AI Medical Assistant. How can I help you today? Select a mode or ask a question.</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div id="file-preview-area" class="mb-2"> 
+                    <small>File to upload: <span id="file-preview-name"></span> <button id="remove-file-btn" class="btn btn-sm btn-danger">×</button></small>
+                </div>
+
+                <div class="input-area">
+                    <label for="userInput" class="sr-only">Chat message input</label>
+                    <textarea id="userInput" class="form-control" rows="2" placeholder="Ask a medical question..."></textarea>
+                    
+                    <label for="fileUploadInput" class="btn btn-secondary file-upload-btn" title="Upload File">
+                        <i class="fas fa-paperclip"></i>
+                    </label>
+                    
+                    <input type="file" id="fileUploadInput" class="visually-hidden-input" 
+                           accept=".pdf,.png,.jpg,.jpeg,.txt,.md,.docx" 
+                           aria-label="File upload input button">
+                    
+                    <button id="sendMessageBtn" class="btn btn-primary send-btn" title="Send Message" aria-label="Send chat message">
+                        <i class="fas fa-paper-plane"></i>
+                    </button>
+                </div>
+                 <small class="form-text text-muted">Max file size: 10MB. Supported: PDF, PNG, JPG, TXT, MD, DOCX.</small>
+            </div>
+        </div>
+    </div>
+
+    <!-- History Modal -->
+    <div class="modal fade" id="historyModal" tabindex="-1" role="dialog" aria-labelledby="historyModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-xl" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="historyModalLabel">Medical & Conversation History</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">×</span>
+                    </button>
+                </div>
+                <div class="modal-body" id="historyModalBody">
+                    <!-- History content will be loaded here -->
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-danger" id="clearHistoryBtn"><i class="fas fa-trash-alt"></i> Clear All History</button>
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.4/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    
+    <!-- Markdown rendering library -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    
+    <!-- PDF Generation Libraries (jsPDF and html2canvas) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <script src="{{ url_for('static', path='js/main_ui.js') }}"></script>
+    <script src="{{ url_for('static', path='js/chat_logic.js') }}"></script>
+</body>
+</html>

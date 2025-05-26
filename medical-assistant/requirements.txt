@@ -1,0 +1,17 @@
+fastapi
+uvicorn[standard]
+python-dotenv
+requests
+httpx  # For async requests in ai_handler
+jinja2
+
+# For potential file processing if Perplexity needs help (add later if needed)
+# Pillow
+# PyPDF2
+# python-docx
+# pytesseract
+# openpyxl
+
+# For PDF generation on backend (if chosen later, not for current frontend approach)
+# reportlab
+# weasyprint
