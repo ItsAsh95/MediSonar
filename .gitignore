@@ -30,6 +30,7 @@ MANIFEST
 
 # IDE / Editor specific
 .vscode/
+!.vscode/extensions.json
 *.code-workspace
 .idea/
 *.suo
@@ -39,14 +40,28 @@ MANIFEST
 *.swp
 
 # Node
+logs
+*.log
 node_modules/
 npm-debug.log
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+dist
+dist-ssr
+*.local
 
 # OS specific
 .DS_Store
 *~
 *.swp
 Thumbs.db
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
 
 # If you were using data/ for persistent JSON and decided against it for session-only
 # medical-assistant/data/*.json # Only if you are NOT committing example structures
