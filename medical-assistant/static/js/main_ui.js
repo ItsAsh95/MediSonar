@@ -32,25 +32,6 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // --- REGION SELECTOR LOGIC ---
-    const countrySelect = document.getElementById('countrySelect');
-    const stateSelect = document.getElementById('stateSelect');
-    const regionSelectorContainer = document.getElementById('regionSelectorContainer');
-    const finalUserRegionInput = document.getElementById('finalUserRegionInput');
-    let countriesDataStore = [];
-
-    async function fetchCountriesData() { /* ... same as previous version ... */ }
-    function populateCountryDropdown() { /* ... same as previous version ... */ }
-    function updateStateDropdown() { /* ... same as previous version ... */ }
-    function updateFinalRegionInput() { /* ... same as previous version ... */ }
-    
-    if (countrySelect) countrySelect.addEventListener('change', () => { updateStateDropdown(); updateFinalRegionInput(); });
-    if (stateSelect) stateSelect.addEventListener('change', updateFinalRegionInput);
-    fetchCountriesData(); // Initialize
-
-    window.toggleRegionSelector = function(show) { /* ... same as previous version ... */ };
-    window.getSelectedRegion = function() { /* ... same as previous version ... */ };
-
 
     // --- MAIN UI MODE AND GREETING LOGIC ---
     const dynamicGreetingEl = document.getElementById('dynamicGreeting');
@@ -124,7 +105,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
     });
-    
+
     // Initialize UI for the default mode
     updateUIForNewMode(window.currentActiveChatMode);
 

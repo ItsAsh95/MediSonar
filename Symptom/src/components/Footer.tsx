@@ -39,7 +39,7 @@ const Footer = () => {
                 </Link>
                 <li>
                   <a href="/" className="text-sm text-gray-600 hover:text-primary-600">
-                    MediConnect
+                    MediSonar
                   </a>
                 </li>
               </li>
@@ -57,9 +57,10 @@ const Footer = () => {
         </div>
         
         <div className="mt-8 border-t border-gray-200 pt-6 flex flex-col md:flex-row justify-between items-center">
-          <p className="text-sm text-gray-600">
-            © {currentYear} MediScan. All rights reserved.
-            © {currentYear} MediConnect. All rights reserved.
+          <p className="text-sm text-gray-600"><b>
+            
+            © {currentYear} MediSonar. All rights reserved.
+            </b>
           </p>
         </div>
       </div>

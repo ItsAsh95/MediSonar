@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Medical Assistant</title>
+    <title>AI Medical Assistant - MediSonar</title>
     <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <link rel="stylesheet" href="{{ url_for('static', path='css/theme.css') }}">
@@ -12,9 +12,8 @@
 <body>
     <nav class="navbar app-navbar">
         <div class="navbar-brand-group">
-            <!-- Assuming you'll add an actual logo image later -->
             <img src="{{ url_for('static', path='assets/dsicon.jpg') }}" alt="Site Logo" id="appLogo" class="app-logo">
-            <span class="navbar-title">MediConnect</span>
+            <span class="navbar-title">MediSonar</span>
         </div>
         <div id="currentModeDisplay" class="navbar-text mx-auto" aria-live="polite">Mode: Ask Away</div>
         <div class="navbar-controls">
@@ -32,7 +31,7 @@
             <button class="nav-btn active" data-main-mode="qna" title="General Medical Q&A">
                 <i class="fas fa-comment-medical"></i> <span class="nav-btn-text">Ask Away</span>
             </button>
-            
+
             <a href="/symptom-analyzer/" class="nav-btn" title="Analyze Your Symptoms (New Experience)">
                 <i class="fas fa-stethoscope"></i> <span class="nav-btn-text">Symptom Analyzer</span>
             </a>
@@ -40,12 +39,12 @@
             <a href="/report-analyzer/" class="nav-btn" title="Analyze Medical Reports (Dedicated App)">
                 <i class="fas fa-file-invoice"></i> <span class="nav-btn-text">Report Analysis</span>
             </a>
-            
+
             <button class="nav-btn" data-main-mode="history_master_view" title="View All History for Main App">
                 <i class="fas fa-history"></i> <span class="nav-btn-text">View App History</span>
             </button>
-            
-            <a href="/doctor-connect" class="nav-btn" title="Find a Doctor"> 
+
+            <a href="/doctor-connect" class="nav-btn" title="Find a Doctor">
                 <i class="fas fa-user-md"></i> <span class="nav-btn-text">Doctor Connect</span>
             </a>
 
@@ -56,18 +55,20 @@
             <a href="/advisories/" class="nav-btn" title="View Health Advisories">
                 <i class="fas fa-bullhorn"></i> <span class="nav-btn-text">Advisories in Effect</span>
             </a>
+            <a href="/about" class="nav-btn" title="About MediSonar">
+                <i class="fas fa-info-circle"></i> <span class="nav-btn-text">About MediSonar</span>
+            </a>
         </aside>
 
         <main class="chat-area-wrapper">
             <div class="chat-header">
                 <h5 id="dynamicGreeting" class="dynamic-greeting" aria-live="polite">Welcome! How can I assist you today?</h5>
-                
             </div>
 
             <div id="activeChatWindow" class="chat-window flex-grow-1">
-                <!-- Initial welcome message can be added by JS -->
+                <!-- Messages will be appended here by chat_logic.js -->
             </div>
-            
+
             <div class="input-section">
                 <div id="filePreviewAreaMain" class="file-preview-main mb-1">
                     <small>Attached: <span id="filePreviewNameMain"></span>
@@ -75,17 +76,17 @@
                     </small>
                 </div>
                 <div class="main-input-group">
-                    <label for="mainUserInput" class="sr-only">Your message or query</label> 
+                    <label for="mainUserInput" class="sr-only">Your message or query</label>
                     <textarea id="mainUserInput" class="form-control main-chat-input" rows="1" placeholder="Type your message or query..."></textarea>
-                    
-                    <label for="mainFileUpload" class="btn btn-light file-upload-btn-main" title="Attach File (PDF, Image, Text)">
+
+                    <label for="mainFileUpload" class="btn file-upload-btn-main" title="Attach File (PDF, Image, Text)">
                         <i class="fas fa-paperclip"></i>
                     </label>
-                    <input type="file" id="mainFileUpload" class="visually-hidden-input" 
-                           accept=".pdf,.png,.jpg,.jpeg,.txt,.md,.docx" 
+                    <input type="file" id="mainFileUpload" class="visually-hidden-input"
+                           accept=".pdf,.png,.jpg,.jpeg,.txt,.md,.docx"
                            aria-label="File attachment input">
-                    
-                    <button id="mainSendBtn" class="btn btn-primary send-btn-main" title="Send Message" aria-label="Send your message">
+
+                    <button id="mainSendBtn" class="btn send-btn-main" title="Send Message" aria-label="Send your message">
                         <i class="fas fa-paper-plane"></i>
                     </button>
                 </div>
@@ -93,6 +94,13 @@
             </div>
         </main>
     </div>
+
+    <footer class="app-footer">
+        <div class="container">
+            <p class="mb-0"><b>© 2025 <a href="/about" class="footer-link" title="About MediSonar">MediSonar</a>. All rights reserved.</b></p>
+            <p class="mb-0"><small>This is an AI-powered assistant. Information provided is not a substitute for professional medical advice.</small></p>
+        </div>
+    </footer>
 
     <!-- Master History Modal -->
     <div class="modal fade" id="masterHistoryModal" tabindex="-1" role="dialog" aria-labelledby="masterHistoryModalLabel" aria-hidden="true">

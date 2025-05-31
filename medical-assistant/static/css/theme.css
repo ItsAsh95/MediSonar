@@ -1,123 +1,187 @@
 /* medical-assistant/static/css/theme.css */
-:root {
-    --primary-color: #007bff;
-    --secondary-color: #6c757d;
-    --light-color: #f8f9fa;
-    --dark-color: #343a40;
-    --background-color: var(--light-color);
-    --text-color: var(--dark-color);
-    --border-color: #dee2e6;
-    --card-bg-color: #ffffff;
-    
-    --navbar-bg: var(--primary-color);
-    --navbar-text: #ffffff;
-    --navbar-title-text: #ffffff;
-    --nav-control-btn-text: #ffffff;
-    --nav-control-btn-border: #ffffff;
-    --nav-control-btn-hover-bg: rgba(255, 255, 255, 0.15);
 
-    --sidebar-bg: #e9ecef;
-    --sidebar-text: #495057;
-    --sidebar-icon-color: #6c757d;
+:root {
+    /* Base & Text */
+    --font-family-sans-serif: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji"; /* Modern font stack */
+    --font-family-monospace: "SFMono-Regular", Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+
+    /* Light Theme Variables */
+    --background-color: #f7f9fc; /* Even softer light blue/gray */
+    --text-color: #25282b; /* Richer dark gray */
+    --secondary-text-color: #6c7a89; /* Softer secondary text */
+    --primary-color: #2979ff; /* Vibrant, modern blue */
+    --primary-color-darker: #1c54b2;
+    --primary-color-lighter: #69a1ff;
+    --accent-color: #ff5252; /* Softer red accent */
+    --link-color: var(--primary-color);
+    --border-color: #dfe4ea; /* Softer, less prominent border */
+    --focus-ring-color: rgba(41, 121, 255, 0.3); /* For focus outlines */
+
+    /* Navbar */
+    --navbar-bg: #ffffff;
+    --navbar-text: #4a5568;
+    --navbar-title-text: var(--primary-color);
+    --navbar-shadow: 0 3px 8px rgba(0,0,0,0.05); /* Slightly more pronounced shadow */
+    --nav-control-btn-bg: transparent;
+    --nav-control-btn-text: var(--primary-color);
+    --nav-control-btn-border: var(--primary-color-lighter);
+    --nav-control-btn-hover-bg: rgba(41, 121, 255, 0.08);
+    --nav-control-btn-hover-border: var(--primary-color);
+
+    /* Sidebar */
+    --sidebar-bg: #ffffff;
+    --sidebar-text: #4a5568;
+    --sidebar-icon-color: var(--primary-color-lighter); /* Slightly lighter icons */
+    --sidebar-hover-bg: #f0f4f8;
+    --sidebar-hover-text: var(--primary-color);
     --sidebar-active-bg: var(--primary-color);
     --sidebar-active-text: #ffffff;
     --sidebar-active-icon-color: #ffffff;
-    --sidebar-hover-bg: #d1d9e0;
+    --sidebar-border-color: var(--border-color);
 
-    --chat-header-bg: var(--card-bg-color);
-    --dynamic-greeting-text: var(--primary-color);
+    /* Chat Area */
+    --chat-area-bg: var(--background-color);
+    --chat-window-bg: #ffffff;
+    --chat-window-border-color: var(--border-color);
+    --chat-window-shadow: inset 0 2px 4px rgba(0,0,0,0.03);
+    --dynamic-greeting-text: var(--text-color);
 
-    --user-message-bg: #007bff; /* Primary color for user messages */
+    /* Messages */
+    --user-message-bg: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-color-lighter) 100%); /* Subtle gradient */
     --user-message-text: #ffffff;
-    --ai-message-bg: #e9ecef;   /* Light grey for AI messages */
-    --ai-message-text: var(--dark-color);
-    --message-avatar-bg: rgba(0,0,0,0.1);
-    --message-avatar-icon: var(--secondary-color);
+    --ai-message-bg: #edf2f7; /* Very light gray for AI */
+    --ai-message-text: #2d3748;
+    --message-avatar-bg: #e2e8f0;
+    --message-content-shadow: 0 3px 6px rgba(0,0,0,0.08); /* Softer, more diffused shadow */
+    --message-code-block-bg: #f7fafc;
+    --message-code-block-text: #4a5568;
+    --message-code-block-border: #e2e8f0;
 
-    --input-bg: #ffffff;
-    --input-text: var(--dark-color);
-    --input-border: #ced4da;
-    --input-focus-border: #86b7fe;
-    --input-focus-shadow: rgba(0, 123, 255, 0.25);
+    /* Input Area */
+    --input-section-bg: #ffffff;
+    --input-section-border-color: var(--border-color);
+    --input-section-shadow: 0 -3px 8px rgba(0,0,0,0.04); /* Shadow above input */
+    --input-bg: #fdfdfe;
+    --input-text: var(--text-color);
+    --input-border: #cbd5e0; /* Slightly darker for better definition */
+    --input-focus-border: var(--primary-color);
+    --input-focus-shadow: 0 0 0 0.2rem var(--focus-ring-color);
+    --input-placeholder-color: #a0aec0;
+
+    --button-light-bg: #f0f4f8;
+    --button-light-text: #4a5568;
+    --button-light-border: #cbd5e0;
+    --button-light-hover-bg: #e2e8f0;
+    --button-light-hover-border: #a0aec0;
+
     --button-primary-bg: var(--primary-color);
     --button-primary-text: #ffffff;
-    --button-light-bg: #f8f9fa;
-    --button-light-text: var(--dark-color);
-    --button-light-border: #ced4da;
+    --button-primary-border: var(--primary-color);
+    --button-primary-hover-bg: var(--primary-color-darker);
+    --button-primary-hover-border: var(--primary-color-darker);
 
-    --link-color: var(--primary-color);
-    --modal-bg: var(--card-bg-color);
+    /* Modal */
+    --modal-bg: #ffffff;
     --modal-header-border: var(--border-color);
     --modal-footer-border: var(--border-color);
+    --modal-shadow: 0 8px 25px rgba(0,0,0,0.1); /* Softer, larger modal shadow */
 
-    --gradient-search-start: #007bff;
-    --gradient-search-end: #0056b3;
+    /* Footer */
+    --footer-bg: #ffffff;
+    --footer-text: #718096;
+    --footer-link-color: var(--primary-color);
+    --footer-link-hover-color: var(--primary-color-darker);
+    --footer-border-color: var(--border-color);
+    --footer-shadow: 0 -2px 6px rgba(0,0,0,0.04);
 }
 
 body.dark-mode {
-    --background-color: #121212; /* Very dark background */
-    --text-color: #e0e0e0;       /* Light text */
-    --border-color: #424242;     /* Darker borders */
-    --card-bg-color: #1e1e1e;    /* Dark card background */
-    
-    --navbar-bg: #0b509e; /* Darker primary */
-    --navbar-text: #e0e0e0;
-    --navbar-title-text: #ffffff;
-    --nav-control-btn-text: #e0e0e0;
-    --nav-control-btn-border: #6c757d;
-    --nav-control-btn-hover-bg: rgba(255, 255, 255, 0.1);
+    /* Dark Theme Variable Overrides */
+    --background-color: #17191e; /* Deeper, cooler dark */
+    --text-color: #e4e6eb;
+    --secondary-text-color: #9098a1;
+    --primary-color: #58a6ff; /* Calmer blue for dark mode */
+    --primary-color-darker: #388bfd;
+    --primary-color-lighter: #79c0ff;
+    --accent-color: #ff7b72;
+    --link-color: var(--primary-color);
+    --border-color: #2d333b; /* Darker, less prominent border */
+    --focus-ring-color: rgba(88, 166, 255, 0.3);
 
-    --sidebar-bg: #1e1e1e;
-    --sidebar-text: #adb5bd;
-    --sidebar-icon-color: #868e96;
-    --sidebar-active-bg: var(--primary-color); /* Keep active prominent */
-    --sidebar-active-text: #ffffff;
-    --sidebar-active-icon-color: #ffffff;
-    --sidebar-hover-bg: #343a40;
+    /* Navbar */
+    --navbar-bg: #1f2328; /* Slightly off-black */
+    --navbar-text: #c9d1d9;
+    --navbar-title-text: var(--primary-color);
+    --navbar-shadow: 0 3px 8px rgba(0,0,0,0.25);
+    --nav-control-btn-bg: transparent;
+    --nav-control-btn-text: var(--primary-color-lighter);
+    --nav-control-btn-border: var(--primary-color);
+    --nav-control-btn-hover-bg: rgba(88, 166, 255, 0.12);
+    --nav-control-btn-hover-border: var(--primary-color-lighter);
 
-    --chat-header-bg: var(--card-bg-color);
-    --dynamic-greeting-text: #7aaaff; /* Lighter shade of primary */
+    /* Sidebar */
+    --sidebar-bg: #1f2328;
+    --sidebar-text: #b1bac4;
+    --sidebar-icon-color: var(--primary-color-lighter);
+    --sidebar-hover-bg: #2a2f35;
+    --sidebar-hover-text: var(--primary-color-lighter);
+    --sidebar-active-bg: var(--primary-color);
+    --sidebar-active-text: #121315;
+    --sidebar-active-icon-color: #121315;
+    --sidebar-border-color: #272b30;
 
-    --user-message-bg: #0056b3; 
-    --user-message-text: #f0f0f0;
-    --ai-message-bg: #333333;   
-    --ai-message-text: #e0e0e0;
-    --message-avatar-bg: rgba(255,255,255,0.1);
-    --message-avatar-icon: var(--secondary-color);
+    /* Chat Area */
+    --chat-area-bg: var(--background-color);
+    --chat-window-bg: #1f2328; /* Consistent with sidebar/navbar */
+    --chat-window-border-color: var(--border-color);
+    --chat-window-shadow: inset 0 2px 4px rgba(0,0,0,0.1);
+    --dynamic-greeting-text: var(--text-color);
 
-    --input-bg: #2c2c2c;
-    --input-text: #e0e0e0;
-    --input-border: #424242;
-    --input-focus-border: #0d6efd;
-    --input-focus-shadow: rgba(13, 110, 253, 0.35);
-    --button-light-bg: #343a40;
-    --button-light-text: #e0e0e0;
-    --button-light-border: #495057;
+    /* Messages */
+    --user-message-bg: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-color-lighter) 100%);
+    --user-message-text: #0a0b0c; /* Ensure contrast with gradient */
+    --ai-message-bg: #2a2f35;
+    --ai-message-text: #c9d1d9;
+    --message-avatar-bg: #272b30;
+    --message-content-shadow: 0 3px 6px rgba(0,0,0,0.25);
+    --message-code-block-bg: #1a1d21;
+    --message-code-block-text: #b1bac4;
+    --message-code-block-border: #2d333b;
 
-    --link-color: #6ea8fe;
-    --modal-bg: #2c2c2c;
-    --modal-header-border: #424242;
-    --modal-footer-border: #424242;
+    /* Input Area */
+    --input-section-bg: #1f2328;
+    --input-section-border-color: #272b30;
+    --input-section-shadow: 0 -3px 8px rgba(0,0,0,0.15);
+    --input-bg: #17191e; /* Match main bg */
+    --input-text: var(--text-color);
+    --input-border: #3a4048;
+    --input-focus-border: var(--primary-color);
+    --input-focus-shadow: 0 0 0 0.2rem var(--focus-ring-color);
+    --input-placeholder-color: #7d8590;
 
-    --gradient-search-start: #0d6efd;
-    --gradient-search-end: #0b509e;
-}
+    --button-light-bg: #3a4048;
+    --button-light-text: #c9d1d9;
+    --button-light-border: #484f58;
+    --button-light-hover-bg: #444a51;
+    --button-light-hover-border: #585f68;
 
-/* Apply base theme */
-body {
-    background-color: var(--background-color);
-    color: var(--text-color);
-    transition: background-color 0.2s ease-in-out, color 0.2s ease-in-out;
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
-}
+    --button-primary-bg: var(--primary-color);
+    --button-primary-text: #0a0b0c;
+    --button-primary-border: var(--primary-color);
+    --button-primary-hover-bg: var(--primary-color-darker);
+    --button-primary-hover-border: var(--primary-color-darker);
 
-/* Make sure aelements inherit color for theme changes */
-a {
-    color: var(--link-color);
-}
-a:hover {
-    color: var(--primary-color); /* Or a slightly lighter/darker version of link-color */
-}
-body.dark-mode a:hover {
-    color: #9ec5fe;
+    /* Modal */
+    --modal-bg: #24282d;
+    --modal-header-border: var(--border-color);
+    --modal-footer-border: var(--border-color);
+    --modal-shadow: 0 8px 25px rgba(0,0,0,0.3);
+
+    /* Footer */
+    --footer-bg: #1f2328;
+    --footer-text: #9098a1;
+    --footer-link-color: var(--primary-color-lighter);
+    --footer-link-hover-color: var(--primary-color);
+    --footer-border-color: #272b30;
+    --footer-shadow: 0 -2px 6px rgba(0,0,0,0.12);
 }

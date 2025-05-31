@@ -112,6 +112,10 @@ async def serve_symptom_analyzer_spa_paths(request: Request, rest_of_path: str):
     if os.path.exists(spa_index_file): return FileResponse(spa_index_file)
     raise HTTPException(status_code=404, detail="Symptom Analyzer resource not found.")
 
+@app.get("/about", response_class=HTMLResponse, include_in_schema=False)
+async def serve_about_page(request: Request):
+    return templates.TemplateResponse("about.html", {"request": request})
+
 @app.get("/symptom-analyzer")
 @app.get("/symptom-analyzer/")
 async def serve_symptom_analyzer_spa_base(request: Request):

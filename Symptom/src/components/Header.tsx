@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Menu, X, Activity, ClipboardList, Home } from 'lucide-react';
+import { Menu, X, Activity, ClipboardList } from 'lucide-react';
 
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -25,7 +25,7 @@ const Header = () => {
   };
 
   const navLinks = [
-    { path: '/', label: 'Home', icon: <Home className="w-5 h-5 mr-2" /> },
+    
     { path: '/analyze', label: 'Symptom Analyzer', icon: <Activity className="w-5 h-5 mr-2" /> },
     { path: '/history', label: 'History', icon: <ClipboardList className="w-5 h-5 mr-2" /> },
   ];
@@ -71,7 +71,7 @@ const Header = () => {
               Start Analysis
             </Link>
             <a href="/" className="text-sm font-medium text-gray-600 hover:text-primary-600">
-                MediConnect
+                MediSonar
             </a>
 
           </nav>

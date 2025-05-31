@@ -1,13 +1,6 @@
 {
     "default_persistent_user": {
         "qna": [],
-        "symptoms": [
-            {
-                "id": "2025-05-31T08:14:08.926681Z",
-                "timestamp": "2025-05-31T08:14:08.926727Z",
-                "user_message": "Symptom Analysis (via React App): - fever (Duration: 1 week, Severity: Severe)",
-                "ai_response": "A severe fever persisting for one week warrants medical attention. While most fevers resolve within 1-3 days[2], prolonged cases may indicate underlying infections (viral/bacterial), inflammatory conditions, or other systemic issues[1][4]. Given the severity described, **urgent clinical evaluation is strongly recommended** to rule out serious causes like:\n\n- Bacterial infections (e.g., pneumonia, urinary tract infections)\n- Viral syndromes (e.g., influenza, COVID-19)\n- Inflammatory disorders[2]\n- Rare but serious conditions like meningitis or endocarditis[4]\n\n**Immediate next steps:**\n1. Monitor temperature patterns (document exact readings)\n2. Check for accompanying symptoms like chest pain, breathing difficulties, or rash\n3. Seek emergency care if experiencing:\n   - Confusion\n   - Stiff neck\n   - Difficulty breathing\n   - Persistent vomiting Possible conditions: Severe febrile illness requiring differential diagnosis including infectious and non-infectious etiologies. Not a diagnosis."
-            }
-        ]
+        "symptoms": []
     }
 }

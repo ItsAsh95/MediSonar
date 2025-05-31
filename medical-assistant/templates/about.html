@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>About MediSonar - Your AI Health Companion</title>
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <!-- Link to shared theme.css for color variables -->
+    <link rel="stylesheet" href="{{ url_for('static', path='css/theme.css') }}">
+    <style>
+        /* Base styles for standalone page */
+        html {
+            height: 100%;
+        }
+        body {
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+            margin: 0;
+            background-color: var(--lt-bg-primary, #F9FAFB); 
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            line-height: 1.6;
+            font-size: 16px; /* Base font size */
+            transition: background-color 0.25s ease-in-out, color 0.25s ease-in-out;
+        }
+        body.dark-mode {
+            background-color: var(--dt-bg-primary, #121212);
+            color: var(--dt-text-primary, #F3F4F6);
+        }
+
+        /* Navbar for About Page */
+        .about-navbar {
+            background: var(--navbar-bg-light, linear-gradient(to right, #007bff, #0056b3));
+            color: var(--navbar-text-light, #FFFFFF);
+            padding: 0.6rem 1.5rem;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            height: 60px;
+            flex-shrink: 0; /* Prevent navbar from shrinking */
+            position: sticky; /* Make navbar sticky */
+            top: 0;
+            z-index: 1000;
+        }
+        body.dark-mode .about-navbar {
+            background: var(--navbar-bg-dark, linear-gradient(to right, #0f203b, #1e3a8a));
+            color: var(--navbar-text-dark, #e0e0e0);
+            box-shadow: 0 2px 5px rgba(0,0,0,0.25);
+        }
+        .about-navbar .navbar-brand-group { display: flex; align-items: center; }
+        .about-navbar .app-logo { height: 32px; width: 32px; margin-right: 0.8rem; border-radius: 4px; object-fit: contain;}
+        .about-navbar .navbar-title { font-size: 1.3rem; font-weight: 600; color: inherit; }
+        .about-navbar .nav-control-btn {
+            background: transparent;
+            color: inherit !important; 
+            border: 1px solid currentColor !important;
+            opacity: 0.85; margin-left: 0.75rem; padding: 0.35rem 0.8rem;
+            font-size: 0.875rem; border-radius: 18px;
+        }
+        .about-navbar .nav-control-btn:hover { opacity: 1; background-color: rgba(255, 255, 255, 0.1) !important; }
+        body.dark-mode .about-navbar .nav-control-btn:hover { background-color: rgba(0, 0, 0, 0.15) !important; }
+
+
+        /* Main content area for scrolling */
+        .about-content-wrapper {
+            flex-grow: 1; /* Allows footer to be pushed down */
+            padding: 2rem 1rem; /* Padding around the card */
+            overflow-y: auto; /* Enable scrolling for this section if content overflows */
+        }
+
+        /* Card Styling */
+        .about-card {
+            max-width: 900px;
+            margin: 0 auto; /* Centered */
+            padding: 2rem 2.5rem; 
+            background-color: var(--lt-bg-secondary, #FFFFFF);
+            border-radius: 12px;
+            box-shadow: 0 5px 20px var(--lt-shadow-sm, rgba(0,0,0,0.07));
+            border: 1px solid var(--lt-border-primary, #E5E7EB);
+        }
+        body.dark-mode .about-card {
+            background-color: var(--dt-bg-secondary, #1F2937);
+            box-shadow: 0 5px 20px var(--dt-shadow-sm, rgba(0,0,0,0.15));
+            border-color: var(--dt-border-primary, #374151);
+        }
+
+        .about-card h1 {
+            font-size: 2rem; font-weight: 700;
+            color: var(--app-primary-color, #007AFF);
+            margin-bottom: 1.5rem; padding-bottom: 0.75rem;
+            border-bottom: 2px solid var(--app-primary-color-light, #58a6ff);
+            text-align: center;
+        }
+        .about-card h2 {
+            font-size: 1.6rem; font-weight: 600;
+            color: var(--app-primary-color, #007AFF);
+            margin-top: 2rem; margin-bottom: 1.25rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 1px solid var(--lt-border-secondary, #D1D5DB);
+        }
+        body.dark-mode .about-card h1 { color: var(--app-primary-color-light, #58a6ff); border-bottom-color: var(--app-primary-color, #007AFF); }
+        body.dark-mode .about-card h2 { color: var(--app-primary-color-light, #58a6ff); border-bottom-color: var(--dt-border-secondary, #4B5563); }
+
+        .about-card p, .about-card li {
+            font-size: 1rem; /* Slightly smaller for better density */
+            line-height: 1.75;
+            margin-bottom: 1.2rem;
+            color: var(--lt-text-primary, #1F2937);
+        }
+        body.dark-mode .about-card p, body.dark-mode .about-card li {
+            color: var(--dt-text-primary, #F3F4F6);
+        }
+        .about-card strong { font-weight: 600; color: inherit; }
+
+        .about-card ul { padding-left: 0; list-style: none; margin-top: 0.5rem;}
+        .about-card ul ul { padding-left: 1.5rem; list-style: disc; margin-top: 0.5rem; margin-bottom: 1rem; }
+        .about-card ul ul li { margin-bottom: 0.5rem; font-size: 0.95rem; }
+
+        .about-card .highlight {
+            background-color: var(--lt-bg-tertiary, #F3F4F6);
+            color: var(--app-primary-color-dark, #0056b3); /* Darker text on light highlight */
+            padding: 0.2rem 0.5rem; border-radius: 5px;
+            font-weight: 500; display: inline-block;
+        }
+        body.dark-mode .about-card .highlight {
+            background-color: var(--dt-bg-tertiary, #374151);
+            color: var(--app-primary-color-light, #58a6ff); /* Lighter text on dark highlight */
+        }
+        .feature-item {
+            margin-bottom: 1.5rem; padding-left: 2.2rem; position: relative;
+        }
+        .feature-item::before {
+            content: "\f058"; 
+            font-family: "Font Awesome 6 Free"; font-weight: 900;
+            position: absolute; left: 0; top: 6px; font-size: 1.1rem; 
+            color: var(--app-primary-color, #007AFF);
+        }
+        body.dark-mode .feature-item::before { color: var(--app-primary-color-light, #58a6ff); }
+
+        /* Footer for About Page */
+        .about-page-footer {
+            padding: 1.5rem 1rem;
+            background-color: var(--lt-bg-secondary, #FFFFFF);
+            border-top: 1px solid var(--lt-border-primary, #E5E7EB);
+            text-align: center;
+            font-size: 0.85rem;
+            color: var(--lt-text-secondary, #6B7280);
+            flex-shrink: 0; /* Prevent footer from shrinking */
+        }
+        body.dark-mode .about-page-footer {
+            background-color: var(--dt-bg-secondary, #1F2937);
+            border-top-color: var(--dt-border-primary, #374151);
+            color: var(--dt-text-secondary, #9CA3AF);
+        }
+        .about-page-footer .footer-links a {
+            color: var(--lt-text-secondary, #6B7280);
+            text-decoration: none; margin: 0 0.75rem;
+        }
+        .about-page-footer .footer-links a:hover { color: var(--app-primary-color, #007AFF); }
+        body.dark-mode .about-page-footer .footer-links a { color: var(--dt-text-secondary, #9CA3AF); }
+        body.dark-mode .about-page-footer .footer-links a:hover { color: var(--app-primary-color-light, #58a6ff); }
+        .about-page-footer .footer-disclaimer { font-size: 0.8rem; margin-top: 0.5rem; opacity: 0.8; }
+    </style>
+</head>
+<body> 
+    <nav class="navbar app-navbar about-navbar">
+        <div class="navbar-brand-group">
+            <img src="{{ url_for('static', path='assets/dsicon.jpg') }}" alt="MediSonar Logo" class="app-logo">
+            <span class="navbar-title">MediSonar</span>
+        </div>
+        <div class="navbar-controls">
+            <a href="/" class="btn btn-sm nav-control-btn" title="Back to Chat Assistant">
+                <i class="fas fa-arrow-left"></i> <span class="d-none d-md-inline">Back to Assistant</span>
+            </a>
+            <button id="themeToggleBtnAboutPage" class="btn btn-sm nav-control-btn" title="Toggle Theme" aria-label="Toggle color theme">
+                <i class="fas fa-sun"></i>
+            </button>
+        </div>
+    </nav>
+
+    <div class="about-content-wrapper"> 
+        <div class="about-card"> 
+            <h1>About MediSonar</h1>
+            <p><strong>MediSonar</strong> is your intelligent, AI-powered health companion, meticulously designed to be your one-stop solution for navigating the complexities of medical information and healthcare access. We aim to empower you with knowledge, guide you through your health journey, and connect you with the resources you need, all with unparalleled precision and user-centric design.</p>
+
+            <h2>What Makes MediSonar Different?</h2>
+            <p>In a world saturated with health information, MediSonar stands out by offering a unique blend of cutting-edge AI capabilities, comprehensive features, and a commitment to accuracy and user trust:</p>
+            <ul>
+                <li class="feature-item"><strong>Holistic Health Platform:</strong> Beyond simple Q&A, MediSonar integrates diverse functionalities. From analyzing your personal symptoms (via our advanced SPA) and processing medical reports (in its dedicated module), to providing detailed regional health research and up-to-date medical advisories, we cover a vast spectrum of health-related needs.</li>
+                <li class="feature-item"><strong>Precision Through Specialized AI:</strong> MediSonar leverages a suite of Perplexity's advanced SONAR models, intelligently routing your requests to the most suitable AI powerhouse:
+                    <ul>
+                        <li><span class="highlight">SONAR PRO:</span> Powers our general Medical Q&A, delivering in-depth, well-structured answers with naturally cited sources and suggestions for further exploration.</li>
+                        <li><span class="highlight">SONAR-REASONING-PRO:</span> Drives our Symptom Analyzer (React SPA) and the dedicated Report Analysis application, designed for complex reasoning and providing structured, actionable insights.</li>
+                        <li><span class="highlight">SONAR-DEEP-RESEARCH:</span> Utilized by our "Survey & Research" module to generate comprehensive, data-rich reports.</li>
+                    </ul>
+                </li>
+                <li class="feature-item"><strong>Commitment to Accuracy & Nuance:</strong> MediSonar emphasizes that it is an informational tool. We guide users to consult qualified healthcare professionals for definitive diagnoses and treatment plans.</li>
+                <li class="feature-item"><strong>User-Centric Design & Experience:</strong> MediSonar features a modern, clean interface, light/dark mode adaptability, and clear presentation of complex data.</li>
+            </ul>
+
+            <h2>Key Capabilities of MediSonar:</h2>
+            <ul>
+                <li class="feature-item">Intelligent Medical Q&A</li>
+                <li class="feature-item">AI Symptom Analysis (Advanced SPA)</li>
+                <li class="feature-item">Medical Report Analysis (Dedicated Application)</li>
+                <li class="feature-item">Regional Health Reports (Survey & Research)</li>
+                <li class="feature-item">Real-time Health Advisories</li>
+                <li class="feature-item">Doctor & Professional Connection</li>
+                <li class="feature-item">Persistent History (for main Q&A/Symptom chat) & Clean UI on Load</li>
+                <li class="feature-item">Data Visualization (Charts/Tables in Q&A and Research Reports)</li>
+            </ul>
+
+            <h2>Our Vision:</h2>
+            <p>MediSonar aims to be a trusted partner in your health management, fostering a better understanding of medical topics and facilitating more informed conversations with your healthcare providers.</p>
+            <p class="mt-4"><em>Always remember, MediSonar is for informational purposes and does not replace consultation with qualified medical professionals.</em></p>
+        </div>
+    </div>
+
+    <footer class="app-footer about-page-footer">
+        <div class="footer-links mb-2">
+            <a href="/">Back to Assistant</a> | 
+            <a href="#">Privacy Policy</a> | 
+            <a href="#">Terms of Service</a>
+        </div>
+        <p class="footer-disclaimer">MediSonar is an AI-powered assistant for informational purposes only.</p>
+        <p><b>© <span id="footerCurrentYearAboutPage"></span> MediSonar. All rights reserved.</b></p>
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const themeToggleBtnAbout = document.getElementById('themeToggleBtnAboutPage'); // Unique ID
+            const body = document.body;
+            const htmlEl = document.documentElement;
+            const themeIconAbout = themeToggleBtnAbout ? themeToggleBtnAbout.querySelector('i') : null;
+
+            function applyPageTheme(theme) {
+                if (!themeIconAbout && !body && !htmlEl) return; // Guard
+                if (theme === 'dark') {
+                    body.classList.add('dark-mode');
+                    htmlEl.setAttribute('data-theme', 'dark'); // For :root variable switching in theme.css
+                    if (themeIconAbout) { themeIconAbout.classList.remove('fa-sun'); themeIconAbout.classList.add('fa-moon');}
+                } else {
+                    body.classList.remove('dark-mode');
+                    htmlEl.removeAttribute('data-theme');
+                    if (themeIconAbout) { themeIconAbout.classList.remove('fa-moon'); themeIconAbout.classList.add('fa-sun'); }
+                }
+                localStorage.setItem('theme', theme); 
+            }
+
+            const savedPageTheme = localStorage.getItem('theme'); 
+            const prefersDarkPage = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+
+            if (savedPageTheme) { applyPageTheme(savedPageTheme); }
+            else if (prefersDarkPage) { applyPageTheme('dark'); }
+            else { applyPageTheme('light'); }
+
+            if (themeToggleBtnAbout) {
+                themeToggleBtnAbout.addEventListener('click', () => {
+                    const currentThemeIsDark = body.classList.contains('dark-mode') || htmlEl.getAttribute('data-theme') === 'dark';
+                    applyPageTheme(currentThemeIsDark ? 'light' : 'dark');
+                });
+            }
+            
+            const footerYearAbout = document.getElementById('footerCurrentYearAboutPage');
+            if (footerYearAbout) {
+                footerYearAbout.textContent = new Date().getFullYear();
+            }
+        });
+    </script>
+</body>
+</html>
