@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Medical Advisories - MediSonar (Integrated)</title>
+    <link rel="stylesheet" href="/advisories-static/style.css"> <!-- Corrected -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+</head>
+<body>
+    <header class="site-header">
+        <div class="header-content">
+            <a href="/advisories-app/" style="text-decoration:none; color: inherit;"> <h1 class="site-title">MediSonar (Advisories)</h1> </a>
+            <div>
+                <button id="theme-toggle-btn" class="theme-toggle" title="Toggle Theme" aria-label="Toggle color theme">
+                    <i class="fas fa-moon"></i>
+                </button>
+                <a href="/" style="color:white; text-decoration:none; margin-left:15px; font-size:0.9rem;" title="Back to Main Medical Suite">« Back to Main Suite</a>
+            </div>
+        </div>
+    </header>
+
+    <main class="container">
+        <div class="header">
+            <h1>Official Medical Advisories</h1>
+            <p class="subtitle">Shows top current government health alerts based on your location.</p>
+        </div>
+        <div class="controls">
+            <label for="locationInput" class="sr-only">Location (State, Country)</label>
+            <input type="text" id="locationInput" placeholder="Enter State, Country (e.g., California, United States)">
+            <button id="getAdvisoriesBtn">Get Advisories</button>
+        </div>
+        <div id="loading" class="hidden">Loading... <span class="spinner-small-inline"></span></div>
+        <div id="resultsArea" class="hidden">
+            <h2>Advisories:</h2>
+            <pre id="advisoriesOutput"></pre>
+        </div>
+        <div id="errorArea" class="hidden error"></div>
+    </main>
+
+    <footer>
+        <p>© <span id="currentYear"></span> MediSonar. All rights reserved. <a href="/">Return to Main Medical Assistant</a></p>
+    </footer>
+    <script src="/advisories-static/script.js"></script> <!-- Corrected -->
+</body>
+</html>

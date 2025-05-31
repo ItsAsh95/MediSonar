@@ -1,22 +1,25 @@
 from fastapi import FastAPI, Request, HTTPException
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, HTMLResponse
 from fastapi.middleware.cors import CORSMiddleware
 import os
-import json
 
-from .api import chat_router
-from .config import settings
-# from .config import settings # Only if settings are needed at app level, e.g. for CORS origins
+# --- CORRECTED IMPORTS FOR SUB-APPLICATION ROUTERS ---
+# These are now treated as top-level packages accessible from the project root
+from .api import chat_router as main_chat_api_router # This one is a sub-package of medical_assistant
+
+import report_analyzer_app.main_router as report_analyzer_router
+import survey_research_app.main_router as survey_research_router
+import advisories_app.main_router as advisories_router
+# Note: To make 'import report_analyzer_app.main_router' work,
+# report_analyzer_app MUST have an __init__.py file. Same for others.
 
 app = FastAPI(
-    title="MediConnect",
-    description="An AI-powered assistant for medical queries, symptom analysis, and report diagnostics.",
-    version="0.1.0"
+    title="AI Medical Suite - Integrated Platform",
+    description="Main application integrating Chat Assistant, Symptom Analyzer SPA, Report Analyzer, Survey & Research, and Health Advisories.",
+    version="2.0.3" # Incremented version
 )
-
-# CORS - Allow all for development, restrict in production
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"], 
@@ -25,80 +28,100 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-STATIC_DIR = os.path.join(BASE_DIR, "static")
-TEMPLATES_DIR = os.path.join(BASE_DIR, "templates")
+# --- Define Base Directories ---
+main_app_module_dir = os.path.dirname(os.path.abspath(__file__)) # medical-assistant/
+project_root_dir = os.path.dirname(main_app_module_dir)          # my_ai_medical_assistant/
 
-# Serve the main static files (CSS, JS for your main app)
-app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
+# --- Static Files & Templates for the MAIN WRAPPER APP (QnA Chat UI) ---
+main_app_static_on_disk = os.path.join(main_app_module_dir, "static")
+main_app_templates_on_disk = os.path.join(main_app_module_dir, "templates")
+app.mount("/static", StaticFiles(directory=main_app_static_on_disk), name="static")
+templates = Jinja2Templates(directory=main_app_templates_on_disk)
 
-templates = Jinja2Templates(directory=TEMPLATES_DIR)
+# --- Symptom Analyzer SPA (React App) ---
+# Path relative to where uvicorn runs (project_root_dir)
+symptom_spa_dist_on_disk = os.path.join(project_root_dir, "medical-assistant", "static", "symptom_analyzer_spa")
+symptom_spa_assets_on_disk = os.path.join(symptom_spa_dist_on_disk, "assets")
+# ... (Static mount for symptom_spa_assets as before) ...
+if os.path.exists(symptom_spa_assets_on_disk) and os.path.isdir(symptom_spa_assets_on_disk):
+    app.mount("/symptom-analyzer/assets", StaticFiles(directory=symptom_spa_assets_on_disk), name="symptom_spa_assets")
+else:
+    print(f"WARNING: Symptom Analyzer SPA assets directory not found: {symptom_spa_assets_on_disk}")
 
-# --- Serve React Symptom Analyzer SPA ---
-# 1. Mount the static assets for the SPA
-SYMPTOM_ANALYZER_SPA_DIR = os.path.join(STATIC_DIR, "symptom_analyzer_spa")
-app.mount("/symptom-analyzer/assets", StaticFiles(directory=os.path.join(SYMPTOM_ANALYZER_SPA_DIR, "assets")), name="symptom_spa_assets")
+# --- Mount Static Directories for HTML Frontends of Sub-Applications ---
+# Paths are now relative to project_root_dir since sub-app folders are siblings to medical-assistant
+report_app_static_on_disk = os.path.join(project_root_dir, "report_analyzer_app", "static")
+if os.path.exists(report_app_static_on_disk) and os.path.isdir(report_app_static_on_disk):
+    app.mount("/report-analyzer-static", StaticFiles(directory=report_app_static_on_disk), name="static_report_app")
+else:
+    print(f"WARNING: Report Analyzer App static directory not found: {report_app_static_on_disk}")
 
-# 2. Catch-all route for the SPA - must be defined AFTER specific API routes
-#    and AFTER the static mount for its assets.
-@app.get("/symptom-analyzer/{rest_of_path:path}")
-async def serve_symptom_analyzer_spa_paths(request: Request, rest_of_path: str):
-    spa_index_file = os.path.join(SYMPTOM_ANALYZER_SPA_DIR, "index.html")
-    if os.path.exists(spa_index_file):
-        return FileResponse(spa_index_file)
-    raise HTTPException(status_code=404, detail="Symptom Analyzer SPA not found.")
+survey_app_static_on_disk = os.path.join(project_root_dir, "survey_research_app", "static")
+if os.path.exists(survey_app_static_on_disk) and os.path.isdir(survey_app_static_on_disk):
+    app.mount("/survey-research-static", StaticFiles(directory=survey_app_static_on_disk), name="static_survey_app")
+else:
+    print(f"WARNING: Survey & Research App static directory not found: {survey_app_static_on_disk}")
 
-@app.get("/symptom-analyzer") # Route for the base SPA path
-async def serve_symptom_analyzer_spa_base(request: Request):
-    spa_index_file = os.path.join(SYMPTOM_ANALYZER_SPA_DIR, "index.html")
-    if os.path.exists(spa_index_file):
-        return FileResponse(spa_index_file)
-    raise HTTPException(status_code=404, detail="Symptom Analyzer SPA not found.")
+advisories_app_static_on_disk = os.path.join(project_root_dir, "advisories_app", "static")
+if os.path.exists(advisories_app_static_on_disk) and os.path.isdir(advisories_app_static_on_disk):
+    app.mount("/advisories-static", StaticFiles(directory=advisories_app_static_on_disk), name="static_advisories_app")
+else:
+    print(f"WARNING: Advisories App static directory not found: {advisories_app_static_on_disk}")
 
-# --- Your existing API router and main app routes ---
-from .api import chat_router # Make sure this import is correct
-app.include_router(chat_router.router, prefix="/api/v1") # API routes first
+# --- Include API Routers ---
+app.include_router(main_chat_api_router.router, prefix="/api/v1") # This router is inside medical_assistant package
+app.include_router(report_analyzer_router.router)      # Imported as top-level
+app.include_router(survey_research_router.router)   # Imported as top-level
+app.include_router(advisories_router.router)        # Imported as top-level
 
-@app.get("/", include_in_schema=False)
+# --- HTML Page Serving for Main Wrapper App ---
+@app.get("/", response_class=HTMLResponse, include_in_schema=False)
 async def serve_home(request: Request):
     return templates.TemplateResponse("index.html", {"request": request})
 
-@app.get("/doctor-connect", include_in_schema=False)
+@app.get("/doctor-connect", response_class=HTMLResponse, include_in_schema=False)
 async def serve_doctor_connect_page(request: Request):
     return templates.TemplateResponse("doctorconnect.html", {"request": request})
 
-# Health check endpoint (good for testing if API is up)
-@app.get("/api/v1/health", tags=["Health"])
+# --- HTML Page Serving for Sub-Applications ---
+@app.get("/report-analyzer", response_class=FileResponse, include_in_schema=False)
+@app.get("/report-analyzer/", response_class=FileResponse, include_in_schema=False)
+async def serve_report_analyzer_frontend():
+    file_path = os.path.join(report_app_static_on_disk, "index.html")
+    if os.path.exists(file_path): return FileResponse(file_path)
+    raise HTTPException(status_code=404, detail="Report Analyzer App UI not found.")
+
+@app.get("/survey-research", response_class=FileResponse, include_in_schema=False)
+@app.get("/survey-research/", response_class=FileResponse, include_in_schema=False)
+async def serve_survey_research_frontend():
+    file_path = os.path.join(survey_app_static_on_disk, "index.html")
+    if os.path.exists(file_path): return FileResponse(file_path)
+    raise HTTPException(status_code=404, detail="Survey & Research App UI not found.")
+
+@app.get("/advisories", response_class=FileResponse, include_in_schema=False)
+@app.get("/advisories/", response_class=FileResponse, include_in_schema=False)
+async def serve_advisories_frontend():
+    file_path = os.path.join(advisories_app_static_on_disk, "index.html")
+    if os.path.exists(file_path): return FileResponse(file_path)
+    raise HTTPException(status_code=404, detail="Advisories App UI not found.")
+
+# --- Catch-all routes for the Symptom Analyzer React SPA ---
+@app.get("/symptom-analyzer/{rest_of_path:path}")
+async def serve_symptom_analyzer_spa_paths(request: Request, rest_of_path: str):
+    spa_index_file = os.path.join(symptom_spa_dist_on_disk, "index.html")
+    if os.path.exists(spa_index_file): return FileResponse(spa_index_file)
+    raise HTTPException(status_code=404, detail="Symptom Analyzer resource not found.")
+
+@app.get("/symptom-analyzer")
+@app.get("/symptom-analyzer/")
+async def serve_symptom_analyzer_spa_base(request: Request):
+    spa_index_file = os.path.join(symptom_spa_dist_on_disk, "index.html")
+    if os.path.exists(spa_index_file): return FileResponse(spa_index_file)
+    raise HTTPException(status_code=404, detail="Symptom Analyzer application not found.")
+
+@app.get("/api/v1/health", tags=["Main App Health"])
 async def health_check():
-    return {"status": "healthy"}
+    return {"status": "healthy", "application": "Main AI Medical Suite"}
 
-
-# Startup event to clear history files if you want a clean slate on every server boot
-# If you want history to persist across server restarts, comment out/remove this.
-# @app.on_event("startup")
-# async def startup_event_clear_history():
-#     print("INFO: Application startup. Clearing persistent history files for a fresh session.")
-#     # Initialize memory_handler to access file paths and user_id
-#     temp_memory_handler = MedicalMemory() # Uses class defaults for paths
-#     user_id_for_init = temp_memory_handler.user_id
-
-#     default_conv_structure = {user_id_for_init: {"qna": [], "symptoms": [], "report": []}}
-#     try:
-#         with open(CONVERSATIONS_FILE, 'w') as f:
-#             json.dump(default_conv_structure, f, indent=4)
-#         print(f"INFO: Cleared and re-initialized {CONVERSATIONS_FILE}")
-#     except Exception as e:
-#         print(f"ERROR: Could not clear/re-initialize {CONVERSATIONS_FILE}: {e}")
-    
-#     default_med_summary = {
-#         user_id_for_init: {
-#             "symptoms_log": [], "analyzed_reports_info": [], "key_diagnoses_mentioned": [],
-#             "allergies": [], "medications_log": []
-#         }
-#     }
-#     try:
-#         with open(MEDICAL_SUMMARY_FILE, 'w') as f:
-#             json.dump(default_med_summary, f, indent=4)
-#         print(f"INFO: Cleared and re-initialized {MEDICAL_SUMMARY_FILE}")
-#     except Exception as e:
-#         print(f"ERROR: Could not clear/re-initialize {MEDICAL_SUMMARY_FILE}: {e}")
+# To run (from my_ai_medical_assistant/ directory):
+# uvicorn medical-assistant.main:app --reload --port 8000

@@ -1,7 +1,6 @@
 {
     "default_persistent_user": {
         "symptoms_log": [],
-        "analyzed_reports_info": [],
         "key_diagnoses_mentioned": [],
         "allergies": [],
         "medications_log": []

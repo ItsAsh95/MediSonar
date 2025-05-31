@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Regional Health Analyzer</title>
+    <link rel="stylesheet" href="/survey-research-static/css/style.css">
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <div class="container">
+        <h1>AI Regional Health Analyzer</h1>
+        <p>Select your desired report type and provide the necessary details to generate a customized health analysis.
+           Reports can cover comprehensive overviews, compare regions, or focus on specific diseases.</p>
+
+        <div class="input-section">
+            <fieldset class="form-group report-type-selection">
+                <legend>Select Report Type:</legend>
+                <div>
+                    <input type="radio" id="typeComprehensive" name="reportType" value="comprehensive_single_area" checked>
+                    <label for="typeComprehensive">Comprehensive Single Area Analysis</label>
+                </div>
+                <div>
+                    <input type="radio" id="typeCompare" name="reportType" value="compare_areas">
+                    <label for="typeCompare">Compare Two Areas</label>
+                </div>
+                <div>
+                    <input type="radio" id="typeDiseaseFocus" name="reportType" value="disease_focus">
+                    <label for="typeDiseaseFocus">Specific Disease/Condition Focus</label>
+                </div>
+            </fieldset>
+
+            <div class="form-grid">
+                <div class="form-group" id="area1Group">
+                    <label for="area1Input" id="area1Label">Area:</label>
+                    <textarea id="area1Input" rows="2" placeholder="e.g., Kenya, California USA, Rural Anytown"></textarea>
+                </div>
+
+                <div class="form-group" id="area2Group" style="display:none;">
+                    <label for="area2Input">Area 2 (for comparison):</label>
+                    <textarea id="area2Input" rows="2" placeholder="e.g., Uganda, Texas USA"></textarea>
+                </div>
+                
+                <div class="form-group full-width" id="diseaseFocusGroup" style="display:none;">
+                    <label for="diseaseFocusInput" id="diseaseFocusLabel">Disease/Condition to Focus On:</label>
+                    <input type="text" id="diseaseFocusInput" placeholder="e.g., Diabetes, Air Pollution Impact, Maternal Healthcare">
+                    <small id="diseaseFocusInfo" class="small-text" style="display: none;">For 'Compare Areas', this makes the comparison focus on the specified disease across both areas.</small>
+                </div>
+                
+                <div class="form-group full-width">
+                    <label for="timeRangeInput">Time Range (Optional):</label>
+                    <input type="text" id="timeRangeInput" placeholder="e.g., 2019-2023, last 3 years, the year 2022">
+                </div>
+
+                <div class="form-group full-width">
+                    <button id="startResearchBtn">Generate Detailed Health Report</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="loadingIndicator" style="display:none;">
+            <p>Generating your custom health analysis report... This involves advanced AI queries and analysis, and may take several minutes (potentially 5-15+ minutes depending on complexity). Please be patient.</p>
+            <div class="spinner"></div>
+        </div>
+        
+        <div id="errorMessage" class="error-message" style="display:none;"></div>
+
+        <div id="reportSection" style="display:none;">
+            <div class="report-header-actions">
+                <h2 id="reportAreaTitle"></h2>
+            </div>
+            <div id="reportContent" class="report-content-area">
+                <!-- Full Markdown report will be rendered here -->
+            </div>
+            
+            <div id="followUpSection" style="margin-top: 30px;">
+                <h3>Ask a Follow-up Question About This Health Report</h3>
+                <textarea id="followUpQuestion" rows="2" placeholder="Ask a specific question about the generated health analysis..."></textarea>
+                <button id="askFollowUpBtn">Ask</button>
+                <div id="followUpLoadingIndicator" style="display:none;">
+                    <p>Thinking...</p>
+                    <div class="spinner-small"></div>
+                </div>
+                <div id="followUpErrorMessage" class="error-message" style="display:none;"></div>
+                <div id="followUpAnswer" class="report-content-area" style="margin-top: 10px;"></div>
+            </div>
+        </div>
+    </div>
+
+    <script src="/survey-research-static/js/script.js"></script>
+</body>
+</html>

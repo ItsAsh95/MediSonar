@@ -32,44 +32,36 @@
             <button class="nav-btn active" data-main-mode="qna" title="General Medical Q&A">
                 <i class="fas fa-comment-medical"></i> <span class="nav-btn-text">Ask Away</span>
             </button>
-                  
-            <a href="/symptom-analyzer/" class="nav-btn" title="Analyze Your Symptoms">
+            
+            <a href="/symptom-analyzer/" class="nav-btn" title="Analyze Your Symptoms (New Experience)">
                 <i class="fas fa-stethoscope"></i> <span class="nav-btn-text">Symptom Analyzer</span>
             </a>
 
-    
-            <button class="nav-btn" data-main-mode="report" title="Analyze Your Lab Report">
-                <i class="fas fa-file-medical-alt"></i> <span class="nav-btn-text">Report Diagnosis</span>
+            <a href="/report-analyzer/" class="nav-btn" title="Analyze Medical Reports (Dedicated App)">
+                <i class="fas fa-file-invoice"></i> <span class="nav-btn-text">Report Analysis</span>
+            </a>
+            
+            <button class="nav-btn" data-main-mode="history_master_view" title="View All History for Main App">
+                <i class="fas fa-history"></i> <span class="nav-btn-text">View App History</span>
             </button>
-            <button class="nav-btn" data-main-mode="history_master_view" title="View All History">
-                <i class="fas fa-history"></i> <span class="nav-btn-text">View History</span>
-            </button>                  
-            <a href="/doctor-connect" class="nav-btn" title="Find a Doctor">
+            
+            <a href="/doctor-connect" class="nav-btn" title="Find a Doctor"> 
                 <i class="fas fa-user-md"></i> <span class="nav-btn-text">Doctor Connect</span>
-            </a>    
-            <button class="nav-btn" data-main-mode="tab4_placeholder" disabled title="Feature Tab 4 (Coming Soon)"><i class="fas fa-cog"></i> <span class="nav-btn-text">Tab 4</span></button>
+            </a>
+
+            <a href="/survey-research/" class="nav-btn" title="AI Research & Surveys">
+                <i class="fas fa-search-plus"></i> <span class="nav-btn-text">Survey & Research</span>
+            </a>
+
+            <a href="/advisories/" class="nav-btn" title="View Health Advisories">
+                <i class="fas fa-bullhorn"></i> <span class="nav-btn-text">Advisories in Effect</span>
+            </a>
         </aside>
 
         <main class="chat-area-wrapper">
             <div class="chat-header">
                 <h5 id="dynamicGreeting" class="dynamic-greeting" aria-live="polite">Welcome! How can I assist you today?</h5>
-                <div id="regionSelectorContainer" class="region-selector mt-2">
-                    <div class="form-row">
-                        <div class="form-group col-md-6 mb-0">
-                            <label for="countrySelect">Country:</label> 
-                            <select id="countrySelect" class="form-control form-control-sm" title="Select your country">
-                                <option value="">-- Select Country --</option>
-                            </select>
-                        </div>
-                        <div class="form-group col-md-6 mb-0">
-                            <label for="stateSelect">State/Province:</label> 
-                            <select id="stateSelect" class="form-control form-control-sm" title="Select your state/province" disabled>
-                                <option value="">-- Select State --</option>
-                            </select>
-                        </div>
-                    </div>
-                </div>
-                <input type="hidden" id="finalUserRegionInput">
+                
             </div>
 
             <div id="activeChatWindow" class="chat-window flex-grow-1">

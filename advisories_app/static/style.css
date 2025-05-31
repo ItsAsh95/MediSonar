@@ -1,0 +1,240 @@
+/* Light Theme (Default) Variables */
+:root {
+    --bg-primary: #f4f4f4;
+    --bg-secondary: #fff;
+    --text-primary: #333;
+    --text-secondary: #555;
+    --accent-primary: #007bff;
+    --accent-primary-text: white;
+    --accent-primary-hover: #0056b3;
+    --border-primary: #ddd;
+    --shadow-primary: rgba(0, 0, 0, 0.1);
+    --input-bg: #fff;
+    --input-border: #ddd;
+    --input-text: #333;
+    --output-bg: #e9ecef;
+    --output-text: #333;
+    --error-text: red;
+    --error-bg: #ffebee;
+    --error-border: red;
+    --transition-speed: 0.3s;
+}
+
+/* Dark Theme Variables */
+[data-theme="dark"] {
+    --bg-primary: #1e1e1e;
+    --bg-secondary: #2c2c2c;
+    --text-primary: #e0e0e0;
+    --text-secondary: #aaaaaa;
+    --accent-primary: #3b82f6;
+    --accent-primary-text: white;
+    --accent-primary-hover: #2563eb;
+    --border-primary: #555555;
+    --shadow-primary: rgba(255, 255, 255, 0.05);
+    --input-bg: #3a3a3a;
+    --input-border: #555555;
+    --input-text: #e0e0e0;
+    --output-bg: #333333;
+    --output-text: #e0e0e0;
+    --error-text: #ff8a80;
+    --error-bg: #401515;
+    --error-border: #ff8a80;
+}
+
+body {
+    font-family: sans-serif;
+    line-height: 1.6;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column; /* Stack children vertically */
+    min-height: 100vh; /* Ensure footer is at bottom */
+    background-color: var(--bg-primary);
+    color: var(--text-primary);
+    transition: background-color var(--transition-speed), color var(--transition-speed);
+}
+
+/* Site Header (MediSonar) Styles */
+.site-header {
+    background-color: var(--accent-primary);
+    color: white;
+    padding: 0.8rem 0; /* Adjusted padding slightly */
+    box-shadow: 0 2px 5px var(--shadow-primary);
+    width: 100%;
+    flex-shrink: 0; /* Prevent header from shrinking */
+    z-index: 1000; /* Keep header on top if other elements have z-index */
+}
+
+.header-content {
+    width: 90%;
+    max-width: 1200px;
+    margin: 0 auto;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.site-title {
+    margin: 0;
+    font-size: 1.8rem;
+    font-weight: 700;
+    color: white; /* Ensure text color is white */
+}
+
+/* Theme Toggle Button in Site Header */
+.theme-toggle {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 1.25rem;
+    color: white; /* Icon color for site header */
+    padding: 8px; /* Increased padding for better click area */
+    border-radius: 50%;
+    width: 40px; /* Slightly larger */
+    height: 40px; /* Slightly larger */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background-color var(--transition-speed), color var(--transition-speed);
+}
+
+.theme-toggle:hover {
+    background-color: rgba(255, 255, 255, 0.15); /* Subtle hover for accent background */
+}
+
+/* Main Content Container */
+.container { /* This is now <main class="container"> */
+    width: 90%;
+    max-width: 600px;
+    text-align: center;
+    background-color: var(--bg-secondary);
+    padding: 2rem;
+    border-radius: 8px;
+    box-shadow: 0 0 20px var(--shadow-primary);
+    transition: background-color var(--transition-speed), box-shadow var(--transition-speed);
+    margin: 2rem auto; /* Vertical margins and auto horizontal for centering */
+    flex-grow: 1; /* Allow main content to expand and push footer down */
+}
+
+/* Header within the main container (Official Medical Advisories) */
+.header {
+    margin-bottom: 2rem;
+    /* Removed position: relative and padding-top: 10px as toggle moved */
+}
+
+h1 { /* Main page H1 like "Official Medical Advisories" */
+    color: var(--text-primary);
+    margin: 0 0 0.5rem 0;
+    font-size: 2rem;
+    transition: color var(--transition-speed);
+}
+
+.subtitle {
+    color: var(--text-secondary);
+    margin: 0;
+    font-size: 1rem;
+    transition: color var(--transition-speed);
+}
+
+.controls {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    margin-bottom: 2rem;
+}
+
+.input-group { /* This class was in CSS but not used in HTML, can be kept or removed */
+    display: flex;
+    width: 100%;
+}
+
+#locationInput {
+    flex-grow: 1;
+    padding: 0.75rem;
+    border: 1px solid var(--input-border);
+    background-color: var(--input-bg);
+    color: var(--input-text);
+    border-radius: 4px;
+    transition: all var(--transition-speed);
+}
+
+#locationInput::placeholder {
+    color: var(--text-secondary);
+}
+
+.button-group { /* This class was in CSS but not used in HTML, can be kept or removed */
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+}
+
+button#getAdvisoriesBtn { /* Specificity for the main button */
+    padding: 0.75rem 1.5rem;
+    background-color: var(--accent-primary);
+    color: var(--accent-primary-text);
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 1rem;
+    transition: background-color var(--transition-speed);
+}
+
+button#getAdvisoriesBtn:hover {
+    background-color: var(--accent-primary-hover);
+}
+
+#resultsArea {
+    margin-top: 2rem;
+    text-align: left;
+}
+
+#advisoriesOutput {
+    background-color: var(--output-bg);
+    color: var(--output-text);
+    padding: 1rem;
+    border-radius: 4px;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    font-family: monospace;
+    border: 1px solid var(--border-primary);
+    transition: all var(--transition-speed);
+}
+
+.hidden {
+    display: none;
+}
+
+#loading {
+    color: var(--text-secondary);
+    font-style: italic;
+    margin: 1rem 0;
+    transition: color var(--transition-speed);
+}
+
+.error {
+    color: var(--error-text);
+    background-color: var(--error-bg);
+    border: 1px solid var(--error-border);
+    padding: 1rem;
+    border-radius: 4px;
+    margin-top: 1rem;
+    transition: all var(--transition-speed);
+}
+
+/* Footer Styles */
+footer {
+    background-color: var(--bg-secondary);
+    color: var(--text-secondary);
+    text-align: center;
+    padding: 1.5rem 0;
+    margin-top: auto; /* Pushes footer to bottom if content is short, with body flex */
+    border-top: 1px solid var(--border-primary);
+    width: 100%;
+    font-size: 0.9rem;
+    flex-shrink: 0; /* Prevent footer from shrinking */
+    transition: background-color var(--transition-speed), color var(--transition-speed), border-top var(--transition-speed);
+}
+
+footer p {
+    margin: 0;
+}

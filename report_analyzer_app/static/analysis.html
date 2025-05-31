@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Analysis Results - MedAnalyzer</title>
+    <link rel="stylesheet" href="/report-analyzer-static/css/style.css">
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+</head>
+<body>
+    <nav class="navbar">
+        <div class="container navbar-content">
+            <a href="/" class="navbar-brand">
+                <span id="stethoscope-icon-nav"></span> <!-- Icon placeholder -->
+                MedAnalyzer
+            </a>
+            <div class="navbar-links">
+                <a href="/">Home</a>
+            </div>
+        </div>
+    </nav>
+
+    <main class="container page-container">
+        <div id="loadingState" class="py-20 text-center">
+            <span id="loader-icon-analysis" class="spinner-large mx-auto"></span>
+            <h2 class="mt-4 text-xl font-medium">Analyzing your medical report...</h2>
+            <p class="mt-2 text-gray-600">This may take a moment or two. Please wait.</p>
+        </div>
+
+        <div id="errorState" class="py-20 text-center" style="display: none;">
+            <span id="alertcircle-icon-error" class="icon-large text-red-500 mx-auto"></span>
+            <h2 class="mt-4 text-xl font-medium">Something went wrong</h2>
+            <p id="errorMessageText" class="mt-2 text-gray-600"></p>
+            <button id="tryAgainButton" class="mt-6 btn btn-primary">
+                Try Again
+            </button>
+        </div>
+
+        <div id="analysisContent" style="display: none;">
+            <div class="mb-10 text-center">
+                <h1 class="text-3xl font-bold mb-4">Medical Report Analysis</h1>
+                <p id="analysisDate" class="text-gray-600"></p>
+                <p id="reportFileName" class="text-sm text-gray-500 mt-1"></p>
+            </div>
+
+            <!-- Overall Status Card -->
+            <div id="overallStatusCard" class="mb-8 rounded-lg border-2 p-6">
+                <div class="flex items-center justify-center mb-4">
+                    <span id="overallStatusIcon" class="mr-3"></span>
+                    <h2 id="overallStatusText" class="text-2xl font-bold"></h2>
+                </div>
+                <div id="overallNormalContent" class="text-center" style="display: none;">
+                     <p id="overallNormalMessage" class="text-green-700 text-lg mb-4"></p>
+                     <div class="bg-white rounded-lg p-4 border">
+                         <div id="overallSummaryMarkdown" class="prose max-w-none"></div>
+                     </div>
+                </div>
+                 <div id="overallAttentionContent" class="text-center" style="display: none;">
+                    <div class="bg-white rounded-lg p-4 border">
+                         <div id="overallAttentionSummaryMarkdown" class="prose max-w-none"></div>
+                     </div>
+                 </div>
+            </div>
+
+            <div class="grid grid-cols-1 lg-grid-cols-3 gap-8">
+                <!-- Main Analysis Column -->
+                <div class="lg-col-span-2 space-y-8">
+                    <!-- Parameters (if any) - This section was missing in your React code, adding it based on structure -->
+                    <div id="parametersSection" class="bg-white shadow-md rounded-lg overflow-hidden border" style="display: none;">
+                        <div class="section-header bg-gray-50">
+                            <span id="activity-icon-params" class="mr-2"></span>
+                            <h3 class="text-xl font-medium">Key Parameters</h3>
+                        </div>
+                        <div class="p-6">
+                            <table class="parameters-table">
+                                <thead>
+                                    <tr>
+                                        <th>Parameter</th>
+                                        <th>Value</th>
+                                        <th>Reference Range</th>
+                                        <th>Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="parametersTableBody">
+                                    <!-- Parameter rows will be injected here -->
+                                </tbody>
+                            </table>
+                            <p id="noParametersMessage" class="text-sm text-gray-500" style="display: none;">No specific parameters were parsed from this report.</p>
+                        </div>
+                    </div>
+                    
+                    <!-- Abnormalities -->
+                    <div id="abnormalitiesSection" class="bg-white shadow-md rounded-lg overflow-hidden border" style="display: none;">
+                        <div class="section-header bg-red-50">
+                            <span id="alerttriangle-icon-abnormal" class="mr-2"></span>
+                            <h3 class="text-xl font-medium">Abnormalities Detected</h3>
+                        </div>
+                        <div id="abnormalitiesList" class="p-6 space-y-4">
+                            <!-- Abnormality items will be injected here -->
+                        </div>
+                         <p id="noAbnormalitiesMessage" class="p-6 text-sm text-gray-500" style="display: none;">No specific abnormalities were identified, or they are described in the summary.</p>
+                    </div>
+                </div>
+
+                <!-- Sidebar -->
+                <div class="space-y-6">
+                    <!-- Recommendations -->
+                    <div class="bg-white shadow-md rounded-lg overflow-hidden border">
+                        <div class="section-header bg-blue-50">
+                            <span id="trendingup-icon-recs" class="mr-2"></span>
+                            <h3 class="text-lg font-medium">Recommendations</h3>
+                        </div>
+                        <div class="p-6">
+                            <ul id="recommendationsList" class="space-y-3">
+                                <!-- Recommendation items will be injected here -->
+                            </ul>
+                        </div>
+                    </div>
+
+                    <!-- Follow-up -->
+                    <div class="bg-white shadow-md rounded-lg overflow-hidden border">
+                        <div class="section-header bg-purple-50">
+                            <span id="info-icon-followup" class="mr-2"></span>
+                            <h3 class="text-lg font-medium">Follow-up Care</h3>
+                        </div>
+                        <div class="p-6">
+                            <p id="followUpText" class="text-sm text-gray-700"></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Disclaimer -->
+            <div class="mt-10">
+                <div class="disclaimer-box">
+                    <div class="flex items-start">
+                        <span id="alertcircle-icon-disclaimer" class="mr-3 mt-0.5 flex-shrink-0"></span>
+                        <div>
+                            <h4 class="text-sm font-medium mb-2">Medical Disclaimer</h4>
+                            <p class="text-sm text-gray-700">
+                                This analysis is generated by an AI model and should not replace professional medical advice.
+                                Always consult with a qualified healthcare provider for proper interpretation of medical reports
+                                and before making any medical decisions. The AI analysis is meant to provide general insights
+                                and should be used as a supplementary tool only.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer class="footer">
+         <div class="container text-xs text-gray-400 text-center mt-4">
+            <p>This tool is designed to assist medical professionals and patients in understanding medical reports. It is not a substitute for professional medical advice.</p>
+        </div>
+    </footer>
+
+    <script src="/report-analyzer-static/js/shared.js"></script>
+    <script src="/report-analyzer-static/js/analysis.js"></script>
+</body>
+</html>

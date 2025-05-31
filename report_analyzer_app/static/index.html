@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MedAnalyzer - AI Medical Report Analysis</title>
+    <link rel="stylesheet" href="/report-analyzer-static/css/style.css">
+    <!-- For Markdown rendering on analysis page, but good to include globally if needed -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+</head>
+<body>
+    <nav class="navbar">
+        <div class="container navbar-content">
+            <a href="/" class="navbar-brand">
+                <span id="stethoscope-icon-nav"></span> <!-- Icon placeholder -->
+                MedAnalyzer
+            </a>
+            <div class="navbar-links">
+                <a href="/">Home</a>
+            </div>
+        </div>
+    </nav>
+
+    <main class="container page-container">
+        <div class="text-center mb-12">
+            <h1 class="text-4xl font-bold">AI-Powered Medical Report Analysis</h1>
+            <p class="text-xl text-gray-600 max-w-3xl mx-auto">
+                Upload your medical reports and get detailed insights and recommendations
+                powered by advanced AI technology.
+            </p>
+        </div>
+
+        <div class="max-w-3xl mx-auto bg-white rounded-lg shadow-md uploader-card">
+            <div class="p-8">
+                <!-- File Uploader Section -->
+                <div id="fileUploader">
+                    <div class="dropzone" id="dropzoneArea">
+                        <input type="file" id="fileInput" accept=".pdf,.jpg,.jpeg,.png,.txt" style="display: none;">
+                        <span id="upload-icon-main" class="upload-icon-main mb-4"></span> <!-- Icon placeholder -->
+                        <p class="text-lg font-medium">Drag & drop your medical report</p>
+                        <p class="mt-2 text-sm text-gray-500">
+                            or <button type="button" id="browseButton" class="link-button">click to browse</button> (PDF, JPG, PNG, TXT up to 10MB)
+                        </p>
+                    </div>
+
+                    <div id="filePreview" class="mt-4 bg-gray-50 rounded-lg p-4" style="display: none;">
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center">
+                                <span id="file-icon-preview" class="mr-2"></span> <!-- Icon placeholder -->
+                                <span id="fileName" class="text-sm font-medium text-gray-700 truncate max-w-xs"></span>
+                                <span id="fileSize" class="ml-2 text-xs text-gray-500"></span>
+                            </div>
+                            <button id="removeFileButton" class="text-gray-400 hover:text-gray-500">
+                                <span id="x-icon-remove"></span> <!-- Icon placeholder -->
+                            </button>
+                        </div>
+                    </div>
+
+                    <div id="errorMessage" class="mt-4 text-sm text-red-600 bg-red-50 p-3 rounded-md" style="display: none;">
+                    </div>
+
+                    <button id="uploadButton" class="mt-6 w-full btn btn-primary" disabled>
+                        Analyze Report
+                    </button>
+                    <div id="loadingIndicator" class="mt-4 text-center" style="display: none;">
+                        <span id="loader-icon-upload" class="spinner mr-2"></span> Uploading and processing...
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="mt-16 grid gap-8 md-grid-cols-3">
+            <div class="feature-card">
+                <span id="filetext-icon-feature" class="feature-icon"></span>
+                <h3>Easy Report Upload</h3>
+                <p>Simply drag and drop or select your medical reports in PDF, image, or text format for instant analysis.</p>
+            </div>
+            <div class="feature-card">
+                <span id="checkcircle-icon-feature" class="feature-icon"></span>
+                <h3>Detailed Analysis</h3>
+                <p>Get comprehensive insights about your medical condition and test results explained in simple terms.</p>
+            </div>
+            <div class="feature-card">
+                <span id="alertcircle-icon-feature-rec" class="feature-icon"></span> <!-- Changed ID to be unique -->
+                <h3>Follow-up Recommendations</h3>
+                <p>Receive personalized suggestions for additional tests or consultations if needed.</p>
+            </div>
+        </div>
+
+        <div class="mt-16 bg-primary-50 rounded-lg p-8 how-it-works">
+            <h2 class="text-2xl font-semibold mb-4">How It Works</h2>
+            <div class="grid md-grid-cols-3 gap-6">
+                <div class="step-card">
+                    <div class="step-number">1</div>
+                    <h3>Upload Your Report</h3>
+                    <p>Upload your medical reports in PDF, image or text format.</p>
+                </div>
+                <div class="step-card">
+                    <div class="step-number">2</div>
+                    <h3>AI Analysis</h3>
+                    <p>Our AI analyzes your report and extracts key information.</p>
+                </div>
+                <div class="step-card">
+                    <div class="step-number">3</div>
+                    <h3>Review Results</h3>
+                    <p>Get detailed insights and recommendations for your health.</p>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer class="footer">
+         <div class="container text-xs text-gray-400 text-center mt-4">
+            <p>This tool is designed to assist medical professionals and patients in understanding medical reports. It is not a substitute for professional medical advice.</p>
+        </div>
+    </footer>
+
+    <script src="/report-analyzer-static/js/shared.js"></script>
+    <script src="/report-analyzer-static/js/home.js"></script>
+</body>
+</html>

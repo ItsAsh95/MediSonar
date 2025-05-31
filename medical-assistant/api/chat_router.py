@@ -181,12 +181,6 @@ async def handle_chat_message(
             response_data_dict = await ai_handler.analyze_personal_symptoms(
                 input_message, history_context, user_region
             )
-        elif current_mode == "personal_report_upload":
-            if not file_info_model_dict: 
-                raise HTTPException(status_code=400, detail="File upload is required for report analysis mode.")
-            response_data_dict = await ai_handler.analyze_uploaded_personal_report(
-                file_info_model_dict, history_context, user_region
-            )
         # No 'else' needed due to mode_str validation earlier
 
         # Ensure all fields for ChatMessageOutput are present, defaulting if necessary
@@ -216,7 +210,7 @@ async def handle_chat_message(
             file_name=file_info_model.name if file_info_model else None
         )
         
-        if current_mode in ["personal_symptoms", "personal_report_upload"] and response_data_dict.get("extracted_medical_info"):
+        if current_mode in ["personal_symptoms"] and response_data_dict.get("extracted_medical_info"):
             memory_handler.update_medical_summary(response_data_dict["extracted_medical_info"])
             
         return response_output

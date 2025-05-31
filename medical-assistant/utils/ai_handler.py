@@ -12,8 +12,7 @@ class AIInteractionHandler:
         self.base_url = settings.PERPLEXITY_API_BASE_URL
 
         self.qna_model = settings.QNA_MODEL
-        self.symptom_model = settings.SYMPTOM_MODEL
-        self.personal_report_model = settings.PERSONAL_REPORT_MODEL
+        self.symptom_model = settings.SYMPTOM_MODEL       
 
         if not self.api_key:
             print("AIInteractionHandler: CRITICAL - PERPLEXITY_API_KEY is not set.")
@@ -440,99 +439,4 @@ class AIInteractionHandler:
             parsed_output["answer"] = parsed_output.pop("answer_markdown") # Use specific key for main answer
         return parsed_output
     
-
-
-
-    async def analyze_uploaded_personal_report(self, file_info: Dict[str, Any], history_context: str, user_region: Optional[str]) -> Dict[str, Any]:
-        # This variable will hold the text to be inserted into the user_prompt
-        processed_file_content_for_prompt = "User did not provide file content for this request, or it was not processable as text for the prompt."
-        decoded_text_content = None # To store potentially decoded text
-
-        if file_info.get('content_base64'):
-            try:
-                import base64
-                decoded_bytes = base64.b64decode(file_info['content_base64'])
-                try:
-                    # Try decoding as UTF-8 text. This is best if the file is indeed text.
-                    decoded_text_content = decoded_bytes.decode('utf-8')
-                    print(f"Successfully decoded base64 file content as UTF-8 text for '{file_info['name']}'. Length: {len(decoded_text_content)}")
-                except UnicodeDecodeError:
-                    # If UTF-8 fails, it might be another encoding or binary.
-                    # For now, we treat it as "binary" for the prompt, as we don't have full-fledged parsers here.
-                    print(f"File '{file_info['name']}' content is binary or not UTF-8 after base64 decode. Treating as binary for prompt context.")
-                    decoded_text_content = f"[Binary Content of type {file_info['type']}. Full analysis may require specialized parsing not available here.]"
-            except Exception as e:
-                print(f"Error decoding base64 content for file '{file_info['name']}': {e}")
-                decoded_text_content = "[Error during base64 decoding of file content]"
-        
-        if decoded_text_content:
-            # Truncate if very long to avoid exceeding token limits.
-            # This is a key challenge: how much context can the model handle?
-            # Sonar models have context windows (e.g., 4K, 8K, 32K tokens). 1 token ~ 4 chars.
-            max_chars_for_prompt = 16000 # Approx 4k tokens for text, adjust based on model's actual context window
-            if len(decoded_text_content) > max_chars_for_prompt:
-                snippet = decoded_text_content[:max_chars_for_prompt] + "\n... (Report content truncated in prompt due to length. Analysis will be based on this snippet.)"
-                processed_file_content_for_prompt = (
-                    f"The following is a TRUNCATED text representation (or binary context description) of the file content. "
-                    f"Analyze based on this available information. If critical information seems missing due to truncation, please state so.\n'''\n{snippet}\n'''"
-                )
-            else:
-                processed_file_content_for_prompt = (
-                    f"The following is the text representation (or binary context description) of the uploaded file. "
-                    f"Please analyze it as a medical report:\n'''\n{decoded_text_content}\n'''"
-                )
-        
-        # System prompt does NOT reference file_content_prompt_segment directly.
-        # It gives general instructions on how to behave when report content is provided in the user message.
-        system_prompt = (
-            "You are 'sonar-reasoning-pro', an AI Medical Report Analyzer. The user has uploaded their medical report. "
-            "Your task is to analyze the provided text content of the report given in the user's message. "
-            "1. Summarize key findings. Explain abnormalities or values outside normal ranges in simple terms. "
-            "2. Suggest potential implications or areas of concern based on the findings. "
-            "3. Provide actionable advice: lifestyle changes, precautions, or if specialist consultation is needed. "
-            "4. If user_region is provided, list 1-2 relevant government health schemes. Mention source if known. "
-            "5. If specialist consultation is advised, mention relevant doctor specialties. Mention source/reasoning if possible. "
-            "6. If the report contains series of lab values or data that can be simply plotted (e.g., blood sugar over 3 readings *within this report*), provide data for 1-2 simple charts. "
-            "7. Prepare a summary for the user's medical record. "
-            "CRITICAL OUTPUT FORMAT: Respond ONLY with a single, valid JSON object string. The JSON object MUST have these top-level keys: "
-            "'answer_markdown' (string: your detailed analysis in Markdown), "
-            "'disease_identification_text' (string: tentative findings, e.g., 'Elevated liver enzymes noted.'), "
-            "'next_steps_list' (list of strings), "
-            "'government_schemes_list' (list of objects: 'name', 'description', 'region_specific', 'source_info'), "
-            "'doctor_recommendations_list' (list of objects: 'specialty', 'reason', 'source_info'), "
-            "'graphs_data_list' (list of graph objects: 'type', 'title', 'labels', 'datasets' (list of {'label':string, 'data':list_of_numbers}), 'source' (optional string)), "
-            "'extracted_medical_info_dict' (object: 'report_name', 'analysis_date', 'key_findings_list', 'abnormal_values_dict', 'potential_diagnoses_mentioned_list'). "
-            "If the file content is uninterpretable, not a medical report, or too truncated/unclear for meaningful analysis, state that clearly in 'answer_markdown'."
-            "Any internal thought process or planning MUST be enclosed in <think>Your thought here</think> tags. These <think> tags can be anywhere in your response string *before* the final JSON output, but the JSON itself must be clean."
-        )
-
-        # User prompt INCLUDES the processed_file_content_for_prompt
-        user_prompt = (
-            f"Relevant User History (for context):\n{history_context}\n\n"
-            f"User's Stated Region: {user_region or 'Not Specified'}\n\n"
-            f"Uploaded File Information: Name='{file_info['name']}', Type='{file_info['type']}', Original Size (bytes)='{file_info['size']}'.\n\n"
-            f"Extracted File Content (or context of binary file) for Analysis:\n{processed_file_content_for_prompt}\n\n" # Using the correctly defined variable
-            "Please provide your analysis of this medical report ONLY as a single JSON object string with the specified keys."
-        )
-
-        raw_response = await self._call_perplexity_api(system_prompt, user_prompt, self.personal_report_model, max_tokens=3500, temperature=0.2)
-        parsed_response = self._parse_ai_response_to_structured_output(raw_response, "personal_report_upload", self.personal_report_model)
-        
-        parsed_response["file_processed_with_message"] = file_info.get("name")
-        emi = parsed_response.get("extracted_medical_info", {}) # Get existing or empty dict
-        if not isinstance(emi, dict): emi = {} # Ensure it's a dict
-
-        emi["report_name"] = file_info['name']
-        emi["analysis_date"] = datetime.utcnow().isoformat() + "Z"
-        
-        # This structure is for MedicalMemory's update_medical_summary
-        # It expects 'reports_analyzed_info_item' to be a single item dict
-        emi["reports_analyzed_info_item"] = {
-            "name": file_info['name'],
-            "date_analyzed": emi["analysis_date"],
-            "key_findings_summary": (isinstance(parsed_response.get("answer"), str) and parsed_response.get("answer")[:150]) or "Analysis performed."
-        }
-        parsed_response["extracted_medical_info"] = emi # Assign back the updated/created emi
-            
-        return parsed_response 
 
