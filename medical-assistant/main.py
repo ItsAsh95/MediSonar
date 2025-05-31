@@ -5,6 +5,7 @@ from fastapi.middleware.cors import CORSMiddleware
 import os
 
 from .api import chat_router
+from .config import settings
 # from .config import settings # Only if settings are needed at app level, e.g. for CORS origins
 
 app = FastAPI(
