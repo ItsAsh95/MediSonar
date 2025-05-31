@@ -27,7 +27,7 @@ window.chatLogic = (() => { // IIFE to create a namespace
     function escapeHtml(unsafe) {
         if (unsafe === null || typeof unsafe === 'undefined') return '';
         return String(unsafe)
-             .replace(/&/g, "&") // Corrected escape for ampersand
+             .replace(/&/g, "&")
              .replace(/</g, "<")
              .replace(/>/g, ">")
              .replace(/"/g, "'")
@@ -36,10 +36,9 @@ window.chatLogic = (() => { // IIFE to create a namespace
 
     function renderMarkdown(markdownText) {
         if (window.marked && typeof markdownText === 'string') {
-            marked.setOptions({ breaks: true, gfm: true, sanitize: true }); // sanitize is important
+            marked.setOptions({ breaks: true, gfm: true, sanitize: true });
             return marked.parse(markdownText);
         }
-        // Fallback for plain text rendering with line breaks
         return `<p>${escapeHtml(markdownText || "").replace(/\n/g, '<br>')}</p>`;
     }
 
@@ -47,7 +46,7 @@ window.chatLogic = (() => { // IIFE to create a namespace
     function appendFollowUpQuestions(parentDiv, questions) {
         if (!questions || !Array.isArray(questions) || questions.length === 0) return;
         const fupDiv = document.createElement('div');
-        fupDiv.className = 'mt-2 ai-structured-info follow-up-questions'; // Added specific class
+        fupDiv.className = 'mt-2 ai-structured-info follow-up-questions';
         fupDiv.innerHTML = `<strong>Follow-up Questions:</strong><ul>${questions.map(q => `<li>${escapeHtml(q)}</li>`).join('')}</ul>`;
         parentDiv.appendChild(fupDiv);
     }
@@ -55,7 +54,7 @@ window.chatLogic = (() => { // IIFE to create a namespace
     function appendSimpleInfo(parentDiv, title, text) {
         if (text === null || typeof text === 'undefined' || text === "") return;
         const infoDiv = document.createElement('div');
-        infoDiv.className = 'mt-2 ai-structured-info simple-info'; // Added specific class
+        infoDiv.className = 'mt-2 ai-structured-info simple-info';
         infoDiv.innerHTML = `<strong>${escapeHtml(title)}:</strong> ${renderMarkdown(text)}`;
         parentDiv.appendChild(infoDiv);
     }
@@ -63,7 +62,7 @@ window.chatLogic = (() => { // IIFE to create a namespace
     function appendList(parentDiv, title, items) {
         if (!items || !Array.isArray(items) || items.length === 0) return;
         const listDiv = document.createElement('div');
-        listDiv.className = 'mt-2 ai-structured-info item-list'; // Added specific class
+        listDiv.className = 'mt-2 ai-structured-info item-list';
         listDiv.innerHTML = `<strong>${escapeHtml(title)}:</strong><ul>${items.map(item => `<li>${renderMarkdown(item)}</li>`).join('')}</ul>`;
         parentDiv.appendChild(listDiv);
     }
@@ -71,7 +70,7 @@ window.chatLogic = (() => { // IIFE to create a namespace
     function appendSchemes(parentDiv, schemes) {
         if (!schemes || !Array.isArray(schemes) || schemes.length === 0) return;
         const schemesDiv = document.createElement('div');
-        schemesDiv.className = 'mt-2 ai-structured-info government-schemes'; // Added specific class
+        schemesDiv.className = 'mt-2 ai-structured-info government-schemes';
         let html = '<strong>Relevant Government Schemes:</strong><ul class="list-unstyled">';
         schemes.forEach(s => {
             if (s && s.name) {
@@ -86,7 +85,7 @@ window.chatLogic = (() => { // IIFE to create a namespace
     function appendDoctorRecommendations(parentDiv, doctors) {
         if (!doctors || !Array.isArray(doctors) || doctors.length === 0) return;
         const drDiv = document.createElement('div');
-        drDiv.className = 'mt-2 ai-structured-info doctor-recommendations'; // Added specific class
+        drDiv.className = 'mt-2 ai-structured-info doctor-recommendations';
         let html = '<strong>Doctor Recommendations:</strong><ul class="list-unstyled">';
         doctors.forEach(dr => {
             if (dr && dr.specialty) {
@@ -107,14 +106,10 @@ window.chatLogic = (() => { // IIFE to create a namespace
 
         const messageOuterContainer = document.createElement('div');
         messageOuterContainer.classList.add('message-container', sender === 'user' ? 'user-message-outer' : 'ai-message-outer');
-        messageOuterContainer.id = messageId;
-
-        const messageDiv = document.createElement('div'); // This div is less styled now, avatar and content are direct children of outer.
-        // messageDiv.classList.add(sender === 'user' ? 'user-message' : 'ai-message'); // Class not used directly on messageDiv for new structure
+        messageOuterContainer.id = messageId; // Set ID on the outermost container
 
         const avatar = document.createElement('div');
         avatar.classList.add('avatar', sender === 'user' ? 'user-avatar' : 'ai-avatar');
-        // Updated AI icon to fa-brain
         avatar.innerHTML = `<i class="fas ${sender === 'user' ? 'fa-user-alt' : 'fa-brain'}"></i>`;
 
 
@@ -128,7 +123,10 @@ window.chatLogic = (() => { // IIFE to create a namespace
             if (messageData.answer_format === 'markdown' && messageData.answer) {
                 messageContentDiv.innerHTML = renderMarkdown(messageData.answer);
             } else {
-                messageContentDiv.textContent = messageData.answer || "Error: AI response was empty or unformatted.";
+                // For plain text, wrap in a p tag to ensure consistent structure if needed
+                const p = document.createElement('p');
+                p.textContent = messageData.answer || "Error: AI response was empty or unformatted.";
+                messageContentDiv.appendChild(p);
             }
 
             appendFollowUpQuestions(messageContentDiv, messageData.follow_up_questions);
@@ -149,8 +147,8 @@ window.chatLogic = (() => { // IIFE to create a namespace
             const controlsDiv = document.createElement('div');
             controlsDiv.className = 'ai-message-controls mt-2 text-right';
             const copyButton = document.createElement('button');
-            copyButton.className = 'btn btn-xs copy-btn'; // Removed btn-outline-secondary for custom styling
-            copyButton.innerHTML = '<i class="fas fa-copy"></i> Copy'; // Shortened text
+            copyButton.className = 'btn btn-xs copy-btn';
+            copyButton.innerHTML = '<i class="fas fa-copy"></i> Copy';
             copyButton.title = "Copy AI's main response text";
             copyButton.setAttribute('aria-label', "Copy AI response");
             copyButton.addEventListener('click', (e) => {
@@ -176,10 +174,8 @@ window.chatLogic = (() => { // IIFE to create a namespace
             }
         }
 
-        // New structure: avatar and messageContentDiv are direct children of messageOuterContainer
         messageOuterContainer.appendChild(avatar);
         messageOuterContainer.appendChild(messageContentDiv);
-        // messageOuterContainer.appendChild(messageDiv); // Old structure if messageDiv was wrapper
 
         activeChatWindow.appendChild(messageOuterContainer);
         activeChatWindow.scrollTop = activeChatWindow.scrollHeight;
@@ -195,10 +191,10 @@ window.chatLogic = (() => { // IIFE to create a namespace
         activeChartsDisplayed[messageId] = [];
 
         const chartWrapper = document.createElement('div');
-        chartWrapper.className = 'chart-container mt-3 p-2 border rounded bg-light'; // Added bg-light for better contrast
+        chartWrapper.className = 'chart-container mt-3 p-2 border rounded bg-light';
 
         const titleEl = document.createElement('h6');
-        titleEl.className = 'text-center mb-2 chart-title'; // Added class
+        titleEl.className = 'text-center mb-2 chart-title';
         titleEl.textContent = graphData.title || "Chart";
         chartWrapper.appendChild(titleEl);
 
@@ -220,8 +216,8 @@ window.chatLogic = (() => { // IIFE to create a namespace
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
-                    scales: { y: { beginAtZero: true, ticks: { color: 'var(--text-color)' } }, x: { ticks: { color: 'var(--text-color)' } } }, // Themed ticks
-                    plugins: { legend: { display: (graphData.datasets && graphData.datasets.length > 1), labels: { color: 'var(--text-color)' } } } // Themed legend
+                    scales: { y: { beginAtZero: true, ticks: { color: 'var(--text-color)' } }, x: { ticks: { color: 'var(--text-color)' } } },
+                    plugins: { legend: { display: (graphData.datasets && graphData.datasets.length > 1), labels: { color: 'var(--text-color)' } } }
                 }
             });
             activeChartsDisplayed[messageId].push(newChart);
@@ -250,11 +246,10 @@ window.chatLogic = (() => { // IIFE to create a namespace
 
         const avatar = document.createElement('div');
         avatar.classList.add('avatar', 'ai-avatar');
-        // Updated loading icon to fa-spinner fa-spin
         avatar.innerHTML = `<i class="fas fa-spinner fa-spin"></i>`;
 
         const content = document.createElement('div');
-        content.classList.add('message-content', 'loading-message-content'); // Added specific class
+        content.classList.add('message-content', 'loading-message-content');
         content.innerHTML = `<p><i>AI is thinking...</i></p>`;
 
         loadingOuter.appendChild(avatar);
@@ -358,7 +353,7 @@ window.chatLogic = (() => { // IIFE to create a namespace
         activeChatWindow.innerHTML = '';
         clearAllDisplayedCharts();
 
-        const loadingMsgId = `loading-history-${mode}`;
+        const loadingMsgId = `loading-history-${mode}-${Date.now()}`; // Unique ID
         addMessageToChat({ answer: `Loading ${mode.replace(/_/g, ' ')} history...`, answer_format: 'text', timestamp: new Date().toISOString()}, 'ai', mode, loadingMsgId);
 
         try {
@@ -405,17 +400,17 @@ window.chatLogic = (() => { // IIFE to create a namespace
             html += '<h5>Medical Summary</h5>';
             if (data.medical_summary && Object.keys(data.medical_summary).length > 0 &&
                 (data.medical_summary.symptoms_log?.length || data.medical_summary.analyzed_reports_info?.length || data.medical_summary.key_diagnoses_mentioned?.length)) {
-                html += '<dl class="row medical-summary-dl">'; // Added class
+                html += '<dl class="row medical-summary-dl">';
                 for (const key in data.medical_summary) {
                     const title = key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
                     let value = data.medical_summary[key];
                     if (Array.isArray(value) && value.length > 0) {
                         if (key === "symptoms_log") {
                             value = value.map(s => `<li>${new Date(s.date).toLocaleDateString()}: ${escapeHtml(s.symptoms.join(', '))}${s.notes ? ` (${escapeHtml(s.notes)})` : ''}</li>`).join('');
-                            value = `<ul class="symptoms-log-list">${value}</ul>`; // Added class
+                            value = `<ul class="symptoms-log-list">${value}</ul>`;
                         } else if (key === "analyzed_reports_info") {
                              value = value.map(r => `<li>${escapeHtml(r.name || "Report")} (${new Date(r.date_analyzed).toLocaleDateString()}) - ${escapeHtml(r.key_findings_summary || "Summary N/A")}</li>`).join('');
-                             value = `<ul class="analyzed-reports-list">${value}</ul>`; // Added class
+                             value = `<ul class="analyzed-reports-list">${value}</ul>`;
                         } else {
                             value = value.map(v => escapeHtml(v)).join(', ');
                         }
@@ -426,14 +421,14 @@ window.chatLogic = (() => { // IIFE to create a namespace
                         html += `<dt class="col-sm-3">${escapeHtml(title)}</dt><dd class="col-sm-9">${value}</dd>`;
                     }
                 }
-                html += '</dl><hr class="my-4"/>'; // Increased hr margin
+                html += '</dl><hr class="my-4"/>';
             } else { html += '<p>No medical summary available.</p><hr class="my-4"/>'; }
 
             for (const mode in data.conversation_summaries) {
                 html += `<h5>${mode.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())} Conversations</h5>`;
                 const interactions = data.conversation_summaries[mode];
                 if (interactions && interactions.length > 0) {
-                    html += '<ul class="list-unstyled conversation-summary-list">'; // Added class
+                    html += '<ul class="list-unstyled conversation-summary-list">';
                     interactions.slice().reverse().forEach(item => {
                         const userMsgDisplay = item.user_message || (item.file_processed ? `<i>File: ${escapeHtml(item.file_processed)}</i>` : '<i>No text message</i>');
                         const aiRespDisplay = item.ai_response ? renderMarkdown(item.ai_response.substring(0, 150) + (item.ai_response.length > 150 ? '...' : '')) : '<i>No AI response.</i>';
@@ -482,18 +477,21 @@ window.chatLogic = (() => { // IIFE to create a namespace
             const { jsPDF } = window.jspdf;
             const activeMode = window.currentActiveChatMode || 'qna';
 
-            addMessageToChat({ answer: "Preparing transcript for PDF generation...", answer_format: 'text'}, 'ai', activeMode);
+            // --- FIX: Assign unique ID to the "Preparing transcript..." message ---
+            const pdfLoadingMsgId = `pdf-loading-${Date.now()}`;
+            addMessageToChat({ answer: "Preparing transcript for PDF generation...", answer_format: 'text'}, 'ai', activeMode, pdfLoadingMsgId);
 
             try {
                 const response = await fetch(`/api/v1/history/${activeMode}`);
-                if (!response.ok) throw new Error(`Failed to fetch history for ${activeMode} for PDF.`);
-                const modeHistory = await response.json();
 
-                const loadingMsgElement = activeChatWindow.querySelector('.message-content p:contains("Preparing transcript")');
-                if (loadingMsgElement && loadingMsgElement.closest('.message-container')) {
-                    loadingMsgElement.closest('.message-container').remove();
+                // --- FIX: Remove the "Preparing transcript..." message using its ID ---
+                const loadingMsgToRemove = document.getElementById(pdfLoadingMsgId);
+                if (loadingMsgToRemove) {
+                    loadingMsgToRemove.remove();
                 }
 
+                if (!response.ok) throw new Error(`Failed to fetch history for ${activeMode} for PDF.`);
+                const modeHistory = await response.json();
 
                 if (!modeHistory || modeHistory.length === 0) {
                     alert(`No chat history found for ${activeMode} mode to download.`);
@@ -501,7 +499,7 @@ window.chatLogic = (() => { // IIFE to create a namespace
                 }
 
                 const pdf = new jsPDF({ orientation: 'p', unit: 'pt', format: 'a4' });
-                pdf.setFont("Helvetica", "sans-serif"); // Set a base font
+                pdf.setFont("Helvetica", "sans-serif");
 
                 const pageWidth = pdf.internal.pageSize.getWidth();
                 const margin = 40;
@@ -513,7 +511,7 @@ window.chatLogic = (() => { // IIFE to create a namespace
                 const titleFontSize = 16;
 
                 function addWrappedText(text, fontSize, isBold = false, isItalic = false, indent = 0, color = [0,0,0]) {
-                    if (yPosition > margin && !isItalic) yPosition += (fontSize * 0.4); // Space before new block, unless it's continuation like italic part
+                    if (yPosition > margin && !isItalic) yPosition += (fontSize * 0.4);
 
                     pdf.setFontSize(fontSize);
                     pdf.setFont(undefined, isBold ? (isItalic ? 'bolditalic' : 'bold') : (isItalic ? 'italic' : 'normal'));
@@ -530,9 +528,9 @@ window.chatLogic = (() => { // IIFE to create a namespace
                     });
                 }
 
-                addWrappedText(`MediSonar - Chat Transcript`, titleFontSize, true, false, 0, [41,121,255]); // Primary color title
+                addWrappedText(`MediSonar - Chat Transcript`, titleFontSize, true, false, 0, [41,121,255]);
                 addWrappedText(`Mode: ${activeMode.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}`, normalFontSize + 1, false);
-                addWrappedText(`Generated: ${new Date().toLocaleString()}`, smallFontSize, false, true, 0, [100,100,100]); // Italic, gray
+                addWrappedText(`Generated: ${new Date().toLocaleString()}`, smallFontSize, false, true, 0, [100,100,100]);
                 yPosition += 20;
 
                 modeHistory.forEach(interaction => {
@@ -540,19 +538,18 @@ window.chatLogic = (() => { // IIFE to create a namespace
                     let userMsgDisplay = interaction.user_message || "";
 
                     if (userMsgDisplay.trim()) {
-                        addWrappedText(`You (${timestamp}):`, smallFontSize, true, false, 0, [0,123,255]); // User label in blue
+                        addWrappedText(`You (${timestamp}):`, smallFontSize, true, false, 0, [0,123,255]);
                         addWrappedText(userMsgDisplay, normalFontSize);
                         if (interaction.file_processed) {
-                            addWrappedText(`(File: ${interaction.file_processed})`, smallFontSize, false, true, 15, [100,100,100]); // Indented file info
+                            addWrappedText(`(File: ${interaction.file_processed})`, smallFontSize, false, true, 15, [100,100,100]);
                         }
                     }
 
                     if (interaction.ai_response) {
-                        addWrappedText(`AI (${timestamp}):`, smallFontSize, true, false, 0, [50,50,50]); // AI label in dark gray
-                        // For PDF, using raw answer; Markdown to PDF is complex with jsPDF alone.
+                        addWrappedText(`AI (${timestamp}):`, smallFontSize, true, false, 0, [50,50,50]);
                         addWrappedText(interaction.ai_response, normalFontSize);
                     }
-                    yPosition += normalFontSize * 0.6; // Space between interactions
+                    yPosition += normalFontSize * 0.6;
                 });
 
                 const pdfTimestamp = new Date().toISOString().replace(/[:.]/g, '-');
@@ -561,6 +558,11 @@ window.chatLogic = (() => { // IIFE to create a namespace
 
             } catch (error) {
                 console.error("Error generating PDF:", error);
+                // --- FIX: Ensure "Preparing transcript..." message is removed on error too ---
+                const loadingMsgToRemoveOnError = document.getElementById(pdfLoadingMsgId);
+                if (loadingMsgToRemoveOnError) {
+                    loadingMsgToRemoveOnError.remove();
+                }
                 addMessageToChat({ answer: "Sorry, an error occurred while generating the PDF transcript.", answer_format: 'text'}, 'ai', activeMode);
             }
         });
