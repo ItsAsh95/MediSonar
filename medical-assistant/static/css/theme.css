@@ -1,125 +1,123 @@
-/* theme.css */
+/* medical-assistant/static/css/theme.css */
 :root {
     --primary-color: #007bff;
     --secondary-color: #6c757d;
-    --background-color: #f8f9fa;
-    --text-color: #212529;
+    --light-color: #f8f9fa;
+    --dark-color: #343a40;
+    --background-color: var(--light-color);
+    --text-color: var(--dark-color);
     --border-color: #dee2e6;
     --card-bg-color: #ffffff;
+    
     --navbar-bg: var(--primary-color);
     --navbar-text: #ffffff;
+    --navbar-title-text: #ffffff;
+    --nav-control-btn-text: #ffffff;
+    --nav-control-btn-border: #ffffff;
+    --nav-control-btn-hover-bg: rgba(255, 255, 255, 0.15);
+
     --sidebar-bg: #e9ecef;
     --sidebar-text: #495057;
+    --sidebar-icon-color: #6c757d;
     --sidebar-active-bg: var(--primary-color);
     --sidebar-active-text: #ffffff;
-    --user-message-bg: #d1e7fd; /* Light blue */
-    --user-message-text: #084298;
-    --ai-message-bg: #e2e3e5;   /* Light grey */
-    --ai-message-text: #41464b;
-    --input-bg: #fff;
+    --sidebar-active-icon-color: #ffffff;
+    --sidebar-hover-bg: #d1d9e0;
+
+    --chat-header-bg: var(--card-bg-color);
+    --dynamic-greeting-text: var(--primary-color);
+
+    --user-message-bg: #007bff; /* Primary color for user messages */
+    --user-message-text: #ffffff;
+    --ai-message-bg: #e9ecef;   /* Light grey for AI messages */
+    --ai-message-text: var(--dark-color);
+    --message-avatar-bg: rgba(0,0,0,0.1);
+    --message-avatar-icon: var(--secondary-color);
+
+    --input-bg: #ffffff;
+    --input-text: var(--dark-color);
     --input-border: #ced4da;
     --input-focus-border: #86b7fe;
+    --input-focus-shadow: rgba(0, 123, 255, 0.25);
     --button-primary-bg: var(--primary-color);
     --button-primary-text: #ffffff;
+    --button-light-bg: #f8f9fa;
+    --button-light-text: var(--dark-color);
+    --button-light-border: #ced4da;
+
     --link-color: var(--primary-color);
+    --modal-bg: var(--card-bg-color);
+    --modal-header-border: var(--border-color);
+    --modal-footer-border: var(--border-color);
+
+    --gradient-search-start: #007bff;
+    --gradient-search-end: #0056b3;
 }
 
 body.dark-mode {
-    --primary-color: #0d6efd; /* Slightly different blue for dark */
-    --secondary-color: #adb5bd;
-    --background-color: #1a1d20; /* Dark background */
-    --text-color: #e9ecef;       /* Light text */
-    --border-color: #495057;     /* Darker borders */
-    --card-bg-color: #2c3034;    /* Dark card background */
-    --navbar-bg: #0b5ed7;
-    --navbar-text: #f8f9fa;
-    --sidebar-bg: #212529;
+    --background-color: #121212; /* Very dark background */
+    --text-color: #e0e0e0;       /* Light text */
+    --border-color: #424242;     /* Darker borders */
+    --card-bg-color: #1e1e1e;    /* Dark card background */
+    
+    --navbar-bg: #0b509e; /* Darker primary */
+    --navbar-text: #e0e0e0;
+    --navbar-title-text: #ffffff;
+    --nav-control-btn-text: #e0e0e0;
+    --nav-control-btn-border: #6c757d;
+    --nav-control-btn-hover-bg: rgba(255, 255, 255, 0.1);
+
+    --sidebar-bg: #1e1e1e;
     --sidebar-text: #adb5bd;
-    --sidebar-active-bg: var(--primary-color);
+    --sidebar-icon-color: #868e96;
+    --sidebar-active-bg: var(--primary-color); /* Keep active prominent */
     --sidebar-active-text: #ffffff;
-    --user-message-bg: #0a58ca; /* Darker blue for user messages */
-    --user-message-text: #e0e0e0;
-    --ai-message-bg: #343a40;   /* Darker grey for AI messages */
-    --ai-message-text: #f0f0f0;
-    --input-bg: #2c3034;
-    --input-border: #495057;
+    --sidebar-active-icon-color: #ffffff;
+    --sidebar-hover-bg: #343a40;
+
+    --chat-header-bg: var(--card-bg-color);
+    --dynamic-greeting-text: #7aaaff; /* Lighter shade of primary */
+
+    --user-message-bg: #0056b3; 
+    --user-message-text: #f0f0f0;
+    --ai-message-bg: #333333;   
+    --ai-message-text: #e0e0e0;
+    --message-avatar-bg: rgba(255,255,255,0.1);
+    --message-avatar-icon: var(--secondary-color);
+
+    --input-bg: #2c2c2c;
+    --input-text: #e0e0e0;
+    --input-border: #424242;
     --input-focus-border: #0d6efd;
-    --button-primary-bg: var(--primary-color);
-    --button-primary-text: #ffffff;
-    --link-color: #6ea8fe; /* Lighter blue for links */
+    --input-focus-shadow: rgba(13, 110, 253, 0.35);
+    --button-light-bg: #343a40;
+    --button-light-text: #e0e0e0;
+    --button-light-border: #495057;
+
+    --link-color: #6ea8fe;
+    --modal-bg: #2c2c2c;
+    --modal-header-border: #424242;
+    --modal-footer-border: #424242;
+
+    --gradient-search-start: #0d6efd;
+    --gradient-search-end: #0b509e;
 }
 
-/* General body styles */
+/* Apply base theme */
 body {
     background-color: var(--background-color);
     color: var(--text-color);
-    transition: background-color 0.3s ease, color 0.3s ease;
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    transition: background-color 0.2s ease-in-out, color 0.2s ease-in-out;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
 }
 
-.navbar {
-    background-color: var(--navbar-bg) !important; /* Important to override bootstrap */
-    color: var(--navbar-text) !important;
+/* Make sure aelements inherit color for theme changes */
+a {
+    color: var(--link-color);
 }
-.navbar .navbar-brand, .navbar .nav-link, .navbar .btn {
-    color: var(--navbar-text) !important;
+a:hover {
+    color: var(--primary-color); /* Or a slightly lighter/darker version of link-color */
 }
-.navbar .btn-outline-light:hover {
-    background-color: rgba(255, 255, 255, 0.2);
-}
-.navbar .btn-outline-secondary, .navbar .btn-outline-info {
-    border-color: var(--navbar-text);
-}
-.navbar .btn-outline-secondary:hover, .navbar .btn-outline-info:hover {
-    background-color: rgba(255, 255, 255, 0.2);
-}
-
-.sidebar {
-    background-color: var(--sidebar-bg);
-    color: var(--sidebar-text);
-    padding: 15px;
-    border-right: 1px solid var(--border-color);
-    height: calc(100vh - 56px); /* Full height minus navbar */
-    overflow-y: auto;
-}
-.sidebar h5 {
-    color: var(--text-color); /* Use main text color for headings in sidebar */
-}
-.sidebar .list-group-item {
-    background-color: transparent;
-    border-color: var(--border-color);
-    color: var(--sidebar-text);
-}
-.sidebar .list-group-item.active {
-    background-color: var(--sidebar-active-bg);
-    color: var(--sidebar-active-text);
-    border-color: var(--sidebar-active-bg);
-}
-.sidebar .list-group-item:hover:not(.active) {
-    background-color: rgba(0,0,0,0.05);
-}
-body.dark-mode .sidebar .list-group-item:hover:not(.active) {
-    background-color: rgba(255,255,255,0.05);
-}
-#userRegionInputArea label {
-     color: var(--text-color);
-}
-#userRegionInput {
-    background-color: var(--input-bg);
-    color: var(--text-color);
-    border-color: var(--input-border);
-}
-
-/* Modal Theming */
-.modal-content {
-    background-color: var(--card-bg-color);
-    color: var(--text-color);
-    border-color: var(--border-color);
-}
-.modal-header, .modal-footer {
-    border-bottom-color: var(--border-color);
-    border-top-color: var(--border-color);
-}
-.modal-header .close {
-    color: var(--text-color);
+body.dark-mode a:hover {
+    color: #9ec5fe;
 }

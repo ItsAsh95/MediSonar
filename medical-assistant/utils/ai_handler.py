@@ -1,11 +1,9 @@
-import httpx
-import json
+import httpx, html, json, re, datetime
 from typing import Dict, Any, Optional, List
 
 from ..config import settings  # Relative import: .. means "go up one directory"
 from ..api.models import AISchemeInfo, AIDoctorRecommendation, AIGraphData # .. then into api
 
-# Placeholder for extracted medical information structure from AI
 ExtractedMedicalInfo = Dict[str, Any]
 
 class AIInteractionHandler:
@@ -13,10 +11,9 @@ class AIInteractionHandler:
         self.api_key = settings.PERPLEXITY_API_KEY
         self.base_url = settings.PERPLEXITY_API_BASE_URL
 
-        # VERIFY THESE MODEL NAMES WITH PERPLEXITY DOCUMENTATION FOR YOUR API KEY
-        self.qna_model = settings.DEFAULT_CHAT_MODEL # e.g., "sonar-small-chat" or "sonar-medium-chat"
-        self.symptom_model = settings.SYMPTOM_ANALYSIS_MODEL # e.g., "sonar-medium-chat"
-        self.personal_report_model = settings.REPORT_ANALYSIS_MODEL # e.g., "sonar-medium-chat" or a model good with context
+        self.qna_model = settings.QNA_MODEL
+        self.symptom_model = settings.SYMPTOM_MODEL
+        self.personal_report_model = settings.PERSONAL_REPORT_MODEL
 
         if not self.api_key:
             print("AIInteractionHandler: CRITICAL - PERPLEXITY_API_KEY is not set.")
@@ -26,37 +23,44 @@ class AIInteractionHandler:
         system_prompt: str,
         user_prompt: str,
         model_name: str,
-        max_tokens: int = 2048, # Default, can be overridden
-        temperature: float = 0.5 # Default, can be overridden
-    ) -> str: # Returns the raw content string from the AI
+        max_tokens: int = 2048,
+        temperature: float = 0.3, # Slightly lower for more factual/consistent responses
+        # Additional parameters can be added here if needed for specific models/tasks
+        # e.g., top_p=0.9, frequency_penalty=0.0, presence_penalty=0.0
+    ) -> str:
         if not self.api_key:
             return "Error: API Key not configured on the server."
 
         messages = [{"role": "system", "content": system_prompt}, {"role": "user", "content": user_prompt}]
-        payload = {"model": model_name, "messages": messages, "max_tokens": max_tokens, "temperature": temperature}
+        payload = {
+            "model": model_name,
+            "messages": messages,
+            "max_tokens": max_tokens,
+            "temperature": temperature
+            # Add other params like top_p, frequency_penalty here if you want to tune them
+            # "top_p": 0.9,
+            # "frequency_penalty": 0.1,
+        }
         headers = {
             "Authorization": f"Bearer {self.api_key}",
             "Content-Type": "application/json",
             "Accept": "application/json"
         }
-        timeout_duration = 120.0 # 2 minutes, adjust if needed for certain tasks
+        timeout_duration = 180.0 # Increased timeout slightly
 
-        # Debug logging (similar to services.py)
         print(f"--- Sending Request to Perplexity (ai_handler) ---")
         print(f"Model: {model_name}")
-        # Avoid logging full payload in production if it contains sensitive prompt data
-        # For debugging, this is fine:
-        # print(f"Payload: {json.dumps(payload, indent=2)}")
-
+        # print(f"Payload Messages: {json.dumps(messages, indent=2)}") # Log messages separately for clarity
 
         try:
             async with httpx.AsyncClient(timeout=timeout_duration) as client:
                 response = await client.post(self.base_url, json=payload, headers=headers)
-                response.raise_for_status() # Raises HTTPStatusError for 4xx/5xx responses
+                response.raise_for_status()
                 response_data = response.json()
 
             if response_data.get("choices") and response_data["choices"][0].get("message"):
                 content = response_data["choices"][0]["message"]["content"].strip()
+                # Log usage if needed for tracking: print(f"Usage: {response_data.get('usage')}")
                 print(f"Raw response received from {model_name} (length: {len(content)} chars).")
                 return content
             else:
@@ -80,195 +84,384 @@ class AIInteractionHandler:
             return f"Error: AI API request failed due to a network issue: {str(req_err)}"
         except Exception as e:
             print(f"Generic error in _call_perplexity_api (model: {model_name}): {e.__class__.__name__} - {e}")
-            import traceback; traceback.print_exc() # For server logs
+            import traceback; traceback.print_exc()
             return f"Error: An unexpected error occurred: {str(e)}"
 
-    def _parse_ai_response_to_structured_output(self, raw_response_text: str, mode: str) -> Dict[str, Any]:
-        """
-        Attempts to parse AI's response into the ChatMessageOutput structure.
-        If AI is prompted for JSON, it tries to parse JSON. Otherwise, it sets the answer field.
-        """
-        output = { # Defaults matching ChatMessageOutput Pydantic model
-            "answer": "Could not understand AI response.", "answer_format": "markdown",
-            "follow_up_questions": None, "disease_identification": None, "next_steps": None,
-            "government_schemes": None, "doctor_recommendations": None, "graphs_data": None,
-            "error": None, "file_processed_with_message": None, "extracted_medical_info": {}
-        }
+    def _strip_think_blocks(self, text_with_thoughts: str) -> str:
+        """Removes <think>...</think> blocks from text, case-insensitive, handles newlines."""
+        if not text_with_thoughts: return ""
+        return re.sub(r"<think>.*?</think>", "", text_with_thoughts, flags=re.DOTALL | re.IGNORECASE).strip()
 
-        if raw_response_text.startswith("Error:"):
-            output["answer"] = raw_response_text
-            output["error"] = raw_response_text
+    def _parse_ai_response_to_structured_output(self, raw_response_text: str, mode: str, model_used: str) -> Dict[str, Any]:
+        output = { # Initialize with all ChatMessageOutput fields as None or empty
+        "answer": cleaned_response_text, # Default to cleaned text if JSON fails
+        "answer_format": "markdown",
+        "follow_up_questions": None, "disease_identification": None, "next_steps": None,
+        "government_schemes": None, "doctor_recommendations": None, "graphs_data": None,
+        "error": None, "file_processed_with_message": None, "extracted_medical_info": {}
+            }
+        print(f"--- PARSING AI RESPONSE (Mode: {mode}, Model: {model_used}) ---")
+        print(f"RAW RESPONSE TEXT (first 500 chars): {raw_response_text[:500]}")
+
+        if not raw_response_text or raw_response_text.startswith("Error:"):
+            output["answer"] = raw_response_text or "Error: Empty response from AI."
+            output["error"] = raw_response_text or "Error: Empty response from AI."
             return output
 
-        try:
-            # Check if the response is intended to be JSON (e.g., from symptom or report analysis modes)
-            # A common pattern is AI wrapping JSON in ```json ... ``` or just returning a JSON string.
-            json_candidate = raw_response_text
-            if raw_response_text.strip().startswith("```json"):
-                json_candidate = raw_response_text.split("```json", 1)[1].split("```", 1)[0].strip()
-            elif raw_response_text.strip().startswith("{") and raw_response_text.strip().endswith("}"):
-                json_candidate = raw_response_text.strip()
-
-            data = json.loads(json_candidate)
-            print("Successfully parsed JSON from AI response.")
-            
-            # Map known keys from AI's JSON to our ChatMessageOutput structure
-            output["answer"] = data.get("answer_markdown", data.get("summary", "AI provided structured data but no primary answer text."))
-            output["follow_up_questions"] = data.get("follow_up_questions")
-            output["disease_identification"] = data.get("disease_identification")
-            output["next_steps"] = data.get("next_steps")
-            output["government_schemes"] = [AISchemeInfo(**s) for s in data.get("government_schemes", []) if isinstance(s, dict)]
-            output["doctor_recommendations"] = [AIDoctorRecommendation(**dr) for dr in data.get("doctor_recommendations", []) if isinstance(dr, dict)]
-            output["graphs_data"] = [AIGraphData(**gd) for gd in data.get("graphs_data", []) if isinstance(gd, dict)]
-            output["extracted_medical_info"] = data.get("extracted_medical_info", {})
-            
-            # If answer_markdown was not present, but a general 'answer' or 'response' key is
-            if output["answer"] == "AI provided structured data but no primary answer text.":
-                if data.get("answer"): output["answer"] = data.get("answer")
-                elif data.get("response"): output["answer"] = data.get("response")
+        # Strip <think> blocks first, especially if using sonar-reasoning-pro
+        cleaned_response_text = self._strip_think_blocks(raw_response_text)
+        print(f"CLEANED RESPONSE TEXT (after <think> strip, first 500 chars): {cleaned_response_text[:500]}")
+        if not cleaned_response_text and raw_response_text: # If stripping thoughts left nothing
+            print(f"Warning: Stripping <think> blocks left an empty response for mode '{mode}'. Original length: {len(raw_response_text)}")
+            # Keep the original raw response if stripping thoughts removed everything meaningful (e.g. if AI put everything in thoughts)
+            cleaned_response_text = raw_response_text if len(raw_response_text) < 500 else raw_response_text[:500] + "... (content was mostly in think blocks)"
 
 
-        except json.JSONDecodeError:
-            print(f"AI response for mode '{mode}' was not valid JSON. Treating as markdown/text.")
-            output["answer"] = raw_response_text # Default to the whole text as answer
-        except Exception as e:
-            print(f"Error parsing AI response structure: {e}. Using raw text.")
-            output["answer"] = raw_response_text
-            output["error"] = f"Error processing AI response structure: {str(e)}"
-            
+        # Attempt to parse JSON if expected for the mode (Symptoms, Report)
+        if mode in ["personal_symptoms", "personal_report_upload"]:
+            try:
+                json_candidate = cleaned_response_text
+                print(f"JSON CANDIDATE (first 500 chars): {json_candidate[:500]}")
+                if cleaned_response_text.strip().startswith("```json"):
+                    json_candidate = cleaned_response_text.split("```json", 1)[1].split("```", 1)[0].strip()
+                elif not (cleaned_response_text.strip().startswith("{") and cleaned_response_text.strip().endswith("}")):
+                    # If not clearly JSON, assume it's markdown and set as answer directly for these modes
+                    # This might happen if the AI fails to produce JSON despite the prompt
+                    print(f"Warning: Expected JSON for mode '{mode}' but received non-JSON like text after stripping thoughts. Treating as answer_markdown.")
+                    output["answer"] = cleaned_response_text
+                    return output
+
+                data = json.loads(json_candidate)
+                print(f"SUCCESSFULLY PARSED JSON DATA: {json.dumps(data, indent=2)}")
+                print(f"Successfully parsed JSON from AI response for mode '{mode}'.")
+                
+                output["answer"] = data.get("answer_markdown", data.get("summary", "AI provided structured data but no primary answer text."))
+                output["follow_up_questions"] = data.get("follow_up_questions")
+                output["disease_identification"] = data.get("disease_identification")
+                output["next_steps"] = data.get("next_steps")
+                output["government_schemes"] = [AISchemeInfo(**s) for s in data.get("government_schemes", []) if isinstance(s, dict)]
+                output["doctor_recommendations"] = [AIDoctorRecommendation(**dr) for dr in data.get("doctor_recommendations", []) if isinstance(dr, dict)]
+                output["graphs_data"] = [AIGraphData(**gd) for gd in data.get("graphs_data", []) if isinstance(gd, dict)]
+                output["extracted_medical_info"] = data.get("extracted_medical_info", {})
+                if output["answer"] == "AI provided structured data but no primary answer text.":
+                    if data.get("answer"): output["answer"] = data.get("answer")
+                    elif data.get("response"): output["answer"] = data.get("response")
+
+            except json.JSONDecodeError as e:
+                print(f"AI response for mode '{mode}' was not valid JSON after stripping thoughts: {e}. Content snippet: {cleaned_response_text[:200]}")
+                output["answer"] = cleaned_response_text # Fallback to showing the cleaned (non-JSON) text
+                output["error"] = f"AI failed to provide valid JSON for {mode}."
+            except Exception as e:
+                print(f"Error parsing AI response structure for mode '{mode}': {e}. Using raw (cleaned) text.")
+                output["answer"] = cleaned_response_text
+                output["error"] = f"Error processing AI response structure for {mode}: {str(e)}"
+        else: # For "qna" mode or other modes not expecting strict JSON
+            output["answer"] = cleaned_response_text
+            # For QnA, try to extract "related topics" if AI includes a specific phrase
+            marker = "You might also be interested in knowing about:"
+            if marker.lower() in cleaned_response_text.lower():
+                parts = re.split(marker, cleaned_response_text, flags=re.IGNORECASE)
+            if len(parts) > 1:
+                output["answer"] = parts[0].strip() # Main answer
+                # Simple split for suggestions, assumes they are list-like or simple questions
+                suggestions_text = parts[1].strip()
+                # Rudimentary split of suggestions, could be improved
+                suggestions = [s.strip() for s in re.split(r'\s*\b(?:or|and|,)\b\s*|\s*\?\s*', suggestions_text) if s.strip()]
+                output["follow_up_questions"] = suggestions # Repurpose this field
+                print(f"Extracted QnA follow-up suggestions: {suggestions}")
+                pass
+        print(f"FINAL PARSED OUTPUT DICT for mode '{mode}': {output}")
         return output
-
+    
     async def get_general_qna_answer(self, question: str, history_context: str, file_info: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
         system_prompt = (
-            "You are an AI Medical Assistant. Provide accurate, in-depth, and easy-to-understand answers to medical questions. "
-            "Format your main answer using Markdown for clarity (e.g., use headings, lists, bold text where appropriate). "
-            "If a file is provided with the question, its name and type will be mentioned. Assume you have access to its content if relevant, and incorporate it into your answer if applicable. "
-            "Politely decline to answer if the question is outside the medical domain, seeks a definitive diagnosis (which you cannot provide), or if you cannot provide a safe or accurate answer. "
-            "Consider the user's relevant history for context."
+            "You are 'sonar-pro', an expert AI Medical Information Assistant. Your goal is to provide comprehensive, accurate, and well-structured answers to medical questions. "
+            "Your response MUST adhere to the following structure and guidelines:\n\n"
+            "1.  **MAIN ANSWER (Markdown):** Provide a detailed, in-depth explanation. Use Markdown for clarity: \n"
+            "    *   Headings (e.g., `## Key Aspects`, `### Treatment Options`).\n"
+            "    *   Bullet points (`* item`) or numbered lists for categorizing information.\n"
+            "    *   Bold text (`**important**`) for emphasis on key terms or concepts.\n"
+            "    *   If the question implies numerical data, trends, or comparisons that can be visualized, try to present this information. If you can generate data suitable for a simple chart (bar, line, pie), or a simple table, include it as part of your main answer text first, then provide the structured data for it (see point 4).\n\n"
+            "2.  **FILE CONTEXT:** If a file is mentioned in the user prompt (name and type will be provided), assume its content is relevant to the question and you have access to it. Integrate information from the file into your answer if applicable and the question pertains to interpreting or discussing it.\n\n"
+            "3.  **CITATIONS & SOURCES:** DO NOT use inline bracketed numerical citations like [1] or [2]. Instead, if you use specific information from identifiable sources, mention the source NATURALLY within the text (e.g., 'According to the World Health Organization...' or 'A 2023 study published in The Journal of Medicine indicated...'). At the VERY END of your entire response (after any chart/table data and before 'Further Exploration'), include a dedicated section titled '## Sources:' followed by a Markdown bulleted list of any primary web sources, specific medical references (like publication titles or official health organization names) you used. If your answer is based on general medical knowledge without specific external documents for this query, state 'General medical knowledge.' under this 'Sources:' heading.\n\n"
+            "4.  **DATA FOR VISUALIZATION (Optional - JSON for Charts/Tables):** If your textual answer describes data suitable for a simple chart or table, provide the structured data for it *after* the main textual answer but *before* the 'Sources:' section. Format this as a JSON string within a special block: `CHART_TABLE_DATA_BLOCK_START` followed by the JSON string on new lines, and then `CHART_TABLE_DATA_BLOCK_END`. The JSON should be an object with a key 'visualizations', which is a list of objects. Each object can be a 'chart' or a 'table'.\n"
+            "    *   **For Charts:** `{'type': 'chart', 'chart_type': 'bar'|'line'|'pie', 'title': 'Chart Title', 'data': {'labels': ['A', 'B'], 'datasets': [{'label': 'Series1', 'data': [10, 20]}]}}`\n"
+            "    *   **For Tables:** `{'type': 'table', 'title': 'Table Title', 'headers': ['Col1', 'Col2'], 'rows': [['R1C1', 'R1C2'], ['R2C1', 'R2C2']]}` (The AI should try to render the table in Markdown in the main answer; this JSON is for potential structured use by the client if needed, but focus is on charts for `graphs_data` output field).\n"
+            "    If no data for visualization is generated, omit this entire CHART_TABLE_DATA_BLOCK.\n\n"
+            "5.  **RELATED TOPICS/FOLLOW-UP SUGGESTIONS:** After the 'Sources:' section, on a new line, suggest ONE or TWO closely related follow-up questions or topics the user might find interesting. Start this section EXACTLY with: 'Further Exploration: '. Example: 'Further Exploration: You might want to learn about the different types of diabetes medication.'\n\n"
+            "SAFETY & SCOPE: Politely decline if the question is outside the medical domain, seeks a definitive diagnosis (which you cannot provide as an AI), or if you cannot provide a safe or accurate answer. If declining, explain briefly why.\n"
+            "CONTEXT: Consider the user's provided history for contextual understanding but do not explicitly repeat the history in your answer."
         )
-        user_prompt_parts = [f"Relevant User History (for context only, do not repeat it in your answer):\n{history_context}\n"]
+
+        user_prompt_parts = [f"Relevant User History (for context only):\n{history_context}\n"]
         if file_info:
-            user_prompt_parts.append(f"The user has also uploaded a file: '{file_info['name']}' (Type: '{file_info['type']}'). If this file is relevant to the question, please consider its content. For example, if the question is about interpreting this file. Assume the file content is available to you if you need it.\n")
-            # Note: Actually sending file content for QnA mode needs careful consideration of token limits.
-            # For now, we're just informing the AI about the file. If it needs the content, it would have to be explicitly provided.
-            # For a simple QnA, we assume the question is about the file, not requiring full file analysis here.
-        user_prompt_parts.append(f"User's Question: {question}")
+            file_summary = f"The user has also uploaded a file relevant to their question: '{file_info['name']}' (Type: '{file_info['type']}'). Please consider its content when answering."
+            if file_info.get('content_base64'):
+                try:
+                    import base64
+                    decoded_content = base64.b64decode(file_info['content_base64']).decode('utf-8', errors='ignore')
+                    max_text_chars = 12000 
+                    if len(decoded_content) > max_text_chars:
+                        decoded_content = decoded_content[:max_text_chars] + "\n... (File content truncated in prompt due to length)"
+                    file_summary += f"\n\nHere is the text content of the file for your analysis:\n\"\"\"\n{decoded_content}\n\"\"\""
+                except Exception as e:
+                    print(f"QnA: Error decoding file for prompt: {e}")
+                    file_summary += "\n(Note: Could not decode file content for inclusion in this prompt snippet.)"
+            user_prompt_parts.append(file_summary)
+        user_prompt_parts.append(f"\nUser's Question: {question}")
         user_prompt = "\n".join(user_prompt_parts)
 
-        raw_response = await self._call_perplexity_api(system_prompt, user_prompt, self.qna_model)
+        # Call the API
+        api_response_content = await self._call_perplexity_api(
+            system_prompt, user_prompt, self.qna_model,
+            temperature=0.3, 
+            max_tokens=3000 
+        )
         
-        # General Q&A typically doesn't return complex structured JSON unless specifically prompted for it.
-        output = self._parse_ai_response_to_structured_output(raw_response, "qna")
-        if file_info:
-            output["file_processed_with_message"] = file_info.get("name")
+        # Initialize output structure
+        output = {
+            "answer": api_response_content, # Default to full API response if parsing fails or not applicable
+            "answer_format": "markdown", 
+            "follow_up_questions": None, 
+            "graphs_data": None, 
+            "error": None,
+            "file_processed_with_message": file_info.get("name") if file_info else None
+        }
+
+        # If the API call itself returned an error string, set it and return
+        if api_response_content.startswith("Error:"):
+            output["error"] = api_response_content
+            output["answer"] = api_response_content # Display the API error as the primary answer
+            return output
+
+        # Proceed with parsing only if the API call was successful
+        cleaned_response = self._strip_think_blocks(api_response_content)
+        if not cleaned_response.strip(): # If stripping thoughts left nothing
+            output["answer"] = "AI response was empty after processing."
+            output["error"] = "AI response empty post-processing."
+            return output
+
+        current_text_to_parse = cleaned_response
+        parsed_charts_list = []
+        
+        # 1. Extract and remove Chart/Table Data Blocks
+        # We'll build the main answer text by removing these blocks first
+        answer_parts_for_main_text = []
+        last_block_end_index = 0
+        chart_block_start_marker = "CHART_TABLE_DATA_BLOCK_START"
+        chart_block_end_marker = "CHART_TABLE_DATA_BLOCK_END"
+
+        # Iteratively find all chart/table blocks
+        for match in re.finditer(f"{re.escape(chart_block_start_marker)}(.*?){re.escape(chart_block_end_marker)}", current_text_to_parse, flags=re.DOTALL):
+            answer_parts_for_main_text.append(current_text_to_parse[last_block_end_index:match.start()])
+            last_block_end_index = match.end()
+            
+            json_str_content = match.group(1).strip()
+            try:
+                chart_table_data = json.loads(json_str_content)
+                if chart_table_data.get("visualizations") and isinstance(chart_table_data["visualizations"], list):
+                    for viz_item in chart_table_data["visualizations"]:
+                        if viz_item.get("type") == "chart":
+                            try:
+                                chart_obj = AIGraphData(
+                                    type=viz_item.get("chart_type", "bar").lower(),
+                                    title=viz_item.get("title", "Chart"),
+                                    labels=viz_item.get("data", {}).get("labels", []),
+                                    datasets=viz_item.get("data", {}).get("datasets", [])
+                                )
+                                parsed_charts_list.append(chart_obj)
+                            except Exception as e_pydantic: # Catch Pydantic validation error
+                                print(f"Error validating chart data structure: {e_pydantic}. Item: {viz_item}")
+                        elif viz_item.get("type") == "table":
+                            # AI was prompted to include tables in main Markdown.
+                            # This JSON is for potential future structured use, not directly appended to answer here.
+                            print(f"Table JSON block found: {viz_item.get('title')}") 
+            except json.JSONDecodeError as e:
+                print(f"Error parsing CHART_TABLE_DATA_BLOCK JSON: {e}. Content: {json_str_content[:200]}")
+                answer_parts_for_main_text.append(f"\n[System Note: A chart/table data block was malformed and could not be processed.]\n")
+
+        answer_parts_for_main_text.append(current_text_to_parse[last_block_end_index:]) # Add text after the last block
+        text_after_chart_parsing = "".join(answer_parts_for_main_text).strip()
+
+        if parsed_charts_list:
+            output["graphs_data"] = parsed_charts_list
+
+        # 2. Extract Further Exploration (from text_after_chart_parsing)
+        current_text_for_sources = text_after_chart_parsing
+        further_explore_marker = "Further Exploration:"
+        # Using regex for case-insensitive split and to capture content after the marker
+        match_further_explore = re.search(f"{re.escape(further_explore_marker)}(.*)", text_after_chart_parsing, flags=re.IGNORECASE | re.DOTALL)
+        if match_further_explore:
+            current_text_for_sources = text_after_chart_parsing[:match_further_explore.start()].strip() # Text before "Further Exploration:"
+            further_exploration_section = match_further_explore.group(1).strip()
+            if further_exploration_section:
+                # Simple split for suggestions. More robust parsing might be needed if format varies.
+                suggestions = [s.strip() for s in re.split(r'\s*\n\s*|\s*-\s*(?=[A-Z])|\s*\d+\.\s*|\s*\?\s*|\s*;\s*', further_exploration_section) if s.strip() and len(s) > 5]
+                output["follow_up_questions"] = suggestions[:2] # Take up to 2
+                print(f"Extracted QnA follow-up suggestions: {output['follow_up_questions']}")
+
+        # 3. Extract Sources and set final Main Answer (from current_text_for_sources)
+        sources_marker = "## Sources:"
+        final_answer_text = current_text_for_sources
+        
+        # Using regex for case-insensitive split for sources marker
+        match_sources = re.search(f"({re.escape(sources_marker)})(.*)", current_text_for_sources, flags=re.IGNORECASE | re.DOTALL)
+        if match_sources:
+            final_answer_text = current_text_for_sources[:match_sources.start()].strip() # Text before "## Sources:"
+            sources_section_content = match_sources.group(2).strip() # Text after "## Sources:"
+            
+            output["answer"] = final_answer_text
+            if sources_section_content:
+                output["answer"] += f"\n\n---\n**Sources:**\n{sources_section_content}"
+            else: # Marker present, but no content after it
+                output["answer"] += f"\n\n---\n**Sources:**\nGeneral medical knowledge."
+        else:
+            output["answer"] = final_answer_text # No "## Sources:" section found
+
+        # Final check: if answer ended up empty but original cleaned_response had content
+        if not output["answer"].strip() and cleaned_response.strip():
+            print("Warning: QnA parsing resulted in empty answer; falling back to full cleaned response (minus chart JSON).")
+            output["answer"] = text_after_chart_parsing # Use text that had chart JSONs removed
+            # Re-attempt to parse follow-ups from this text_after_chart_parsing if they weren't caught
+            if not output["follow_up_questions"] and further_explore_marker.lower() in text_after_chart_parsing.lower():
+                 match_fe_fallback = re.search(f"{re.escape(further_explore_marker)}(.*)", text_after_chart_parsing, flags=re.IGNORECASE | re.DOTALL)
+                 if match_fe_fallback and match_fe_fallback.group(1).strip():
+                    suggestions_fallback = [s.strip() for s in re.split(r'\s*\n\s*|\s*-\s*(?=[A-Z])|\s*\d+\.\s*|\s*\?\s*|\s*;\s*', match_fe_fallback.group(1).strip()) if s.strip() and len(s) > 5]
+                    output["follow_up_questions"] = suggestions_fallback[:2]
+
         return output
 
+        # ... (analyze_personal_symptoms and analyze_uploaded_personal_report methods as refined in previous steps)
+        # ... (_strip_think_blocks as before)
+        # ... (_parse_ai_response_to_structured_output for symptoms/report as before)
 
+
+    
     async def analyze_personal_symptoms(self, symptoms_description: str, history_context: str, user_region: Optional[str]) -> Dict[str, Any]:
         system_prompt = (
-            "You are an AI Medical Symptom Analyzer. Your goal is to provide helpful, general information, not a diagnosis. "
-            "Based on the user's symptoms, history, and region: "
-            "1. Identify potential areas of concern or common conditions that *might* be related (be very clear this is not a diagnosis). "
-            "2. Suggest 2-3 clarifying follow-up questions the user could consider. "
-            "3. List actionable, general next steps (e.g., 'monitor symptoms closely', 'consider consulting a General Practitioner', 'try general home care for mild symptoms like rest and hydration'). "
-            "4. If user_region is provided, list 1-2 relevant public health schemes or resources in that region that *could* be helpful for common conditions (do not imply the user has these conditions). "
-            "5. If symptoms seem to strongly suggest needing medical attention, recommend consulting specific doctor specialties. "
-            "6. Prepare a small summary of key medical information derived from this interaction for the user's record. "
-            "IMPORTANT: Respond ONLY with a single, valid JSON object string. The JSON object should have these top-level keys: "
-            "'answer_markdown' (string: your conversational analysis and explanation in Markdown), "
-            "'follow_up_questions' (list of strings), "
-            "'disease_identification' (string: very tentative, e.g., 'Could be related to viral infections or stress. Not a diagnosis.'), "
-            "'next_steps' (list of strings), "
-            "'government_schemes' (list of objects, each with 'name':string, 'description':string, 'region_specific':string (optional, e.g., 'National' or state name)), "
-            "'doctor_recommendations' (list of objects, each with 'specialty':string, 'reason':string (optional)), "
-            "'extracted_medical_info' (object: e.g., {'current_symptoms_list': ['headache', 'fatigue'], 'potential_conditions_discussed_list': ['viral infection', 'stress']}). "
-            "If symptoms are too vague or indicate an emergency, the 'answer_markdown' should advise seeking appropriate medical attention immediately and other JSON fields can be null or empty lists."
-        )
-        user_prompt = (
-            f"Relevant User History (for context):\n{history_context}\n\n"
+        "You are 'sonar-reasoning-pro', an AI Medical Symptom Analyzer. Your goal is to provide helpful, general information, not a definitive diagnosis. "
+        "If the user's symptom description is brief or vague, your PRIORITY is to ask 2-4 specific, clarifying follow-up questions to gather more details. "
+        "Otherwise, provide a preliminary analysis. "
+        "CRITICAL OUTPUT FORMAT: Respond ONLY with a single, valid JSON object string. DO NOT use any conversational filler before or after the JSON. "
+        "The JSON object MUST have a top-level key 'answer_markdown' (string: this is where your main conversational analysis, explanations, follow-up questions if any, and any direct advice in Markdown format should go). "
+        "Other top-level keys in the JSON object must be: "
+        "'follow_up_questions_list' (list of strings: EITHER your clarifying questions if initial info is vague, OR null/empty if providing analysis in 'answer_markdown'), "
+        "'disease_identification_text' (string: very tentative, e.g., 'Symptoms could align with common viral infections or stress-related issues. This is not a diagnosis.'), "
+        "'next_steps_list' (list of strings: e.g., 'monitor symptoms', 'consult a GP'), "
+        "'government_schemes_list' (list of objects, each with 'name':string, 'description':string, 'region_specific':string (optional), 'source_info':string (optional) - provide 1-2 relevant schemes if user_region is given), "
+        "'doctor_recommendations_list' (list of objects, each with 'specialty':string, 'reason':string (optional), 'source_info':string (optional) - suggest specialties if symptoms warrant medical attention), "
+        "'extracted_medical_info_dict' (object: e.g., {'current_symptoms_list': ['headache', 'fatigue'], 'potential_conditions_discussed_list': ['viral infection', 'stress']}). "
+        "If symptoms describe an immediate emergency, 'answer_markdown' MUST strongly advise seeking urgent medical care, and other JSON fields can be null or empty lists. "
+        "Any internal thought process or planning MUST be enclosed in <think>Your thought here</think> tags. These <think> tags can be anywhere in your response string *before* the final JSON output, but the JSON itself must be clean."
+         )
+        user_prompt = (f"Relevant User History (for context):\n{history_context}\n\n"
             f"User's Stated Region: {user_region or 'Not Specified'}\n\n"
             f"User's Described Symptoms: {symptoms_description}\n\n"
-            "Please provide your analysis ONLY as a single JSON object string with the specified keys."
-        )
-        raw_response = await self._call_perplexity_api(system_prompt, user_prompt, self.symptom_model, max_tokens=3000) # Allow more tokens for JSON
-        return self._parse_ai_response_to_structured_output(raw_response, "personal_symptoms")
+            "Please provide your analysis ONLY as a single JSON object string with the specified keys. If the symptoms are too vague, prioritize asking follow-up questions within the JSON structure.")
+        raw_response = await self._call_perplexity_api(system_prompt, user_prompt, self.symptom_model, max_tokens=3000)
+        # Parsing logic will strip <think> then try to parse JSON
+        parsed_output = self._parse_ai_response_to_structured_output(raw_response, "personal_symptoms", self.symptom_model)
+        # Ensure the 'answer' field in the final dict gets the 'answer_markdown' from the parsed JSON
+        if isinstance(parsed_output.get("answer"), dict) and "answer_markdown" in parsed_output["answer"]: # Check if full JSON was put in answer
+            parsed_output["answer"] = parsed_output["answer"]["answer_markdown"]
+        elif isinstance(parsed_output.get("extracted_medical_info"), dict) and parsed_output.get("answer_markdown"): # If keys were parsed correctly
+            parsed_output["answer"] = parsed_output.pop("answer_markdown") # Use specific key for main answer
+        return parsed_output
+    
+# medical-assistant/utils/ai_handler.py
 
+# ... (imports and class definition as before) ...
 
     async def analyze_uploaded_personal_report(self, file_info: Dict[str, Any], history_context: str, user_region: Optional[str]) -> Dict[str, Any]:
-        # This assumes Perplexity can analyze the content if provided.
-        # For large files, sending full base64 is problematic.
-        # A better long-term solution for large files would be an API that accepts file IDs after upload,
-        # or a model specifically fine-tuned for document QA with a mechanism to provide the document.
-        # For now, we'll send the base64 content and explicitly tell the AI it's base64.
-        
-        file_content_prompt_segment = "User did not provide file content, or it could not be processed."
+        # This variable will hold the text to be inserted into the user_prompt
+        processed_file_content_for_prompt = "User did not provide file content for this request, or it was not processable as text for the prompt."
+        decoded_text_content = None # To store potentially decoded text
+
         if file_info.get('content_base64'):
-            # Truncate if too long to prevent exceeding token limits in the prompt itself.
-            # This is a major limitation if the whole document needs analysis.
-            # Perplexity models have context windows (e.g., 4k, 8k, 32k tokens).
-            # Base64 is ~33% larger than original binary. Text is ~1 token per 4 chars.
-            # Example: 100KB text is ~25k tokens. Its base64 is ~133KB.
-            # Max reasonable base64 string length in prompt might be only a few thousand chars.
-            max_b64_chars_in_prompt = 10000 # Arbitrary limit for prompt, roughly 2.5k tokens for base64 itself
-            b64_content = file_info['content_base64']
-            if len(b64_content) > max_b64_chars_in_prompt:
-                b64_snippet = b64_content[:max_b64_chars_in_prompt] + "... (content truncated)"
-                file_content_prompt_segment = (
-                    f"The following is a TRUNCATED Base64 encoded snippet of the file content for context. "
-                    f"The full file cannot be included due to length constraints. Analyze based on this snippet if possible, "
-                    f"or indicate if full content is needed and cannot be processed this way:\n{b64_snippet}"
+            try:
+                import base64
+                decoded_bytes = base64.b64decode(file_info['content_base64'])
+                try:
+                    # Try decoding as UTF-8 text. This is best if the file is indeed text.
+                    decoded_text_content = decoded_bytes.decode('utf-8')
+                    print(f"Successfully decoded base64 file content as UTF-8 text for '{file_info['name']}'. Length: {len(decoded_text_content)}")
+                except UnicodeDecodeError:
+                    # If UTF-8 fails, it might be another encoding or binary.
+                    # For now, we treat it as "binary" for the prompt, as we don't have full-fledged parsers here.
+                    print(f"File '{file_info['name']}' content is binary or not UTF-8 after base64 decode. Treating as binary for prompt context.")
+                    decoded_text_content = f"[Binary Content of type {file_info['type']}. Full analysis may require specialized parsing not available here.]"
+            except Exception as e:
+                print(f"Error decoding base64 content for file '{file_info['name']}': {e}")
+                decoded_text_content = "[Error during base64 decoding of file content]"
+        
+        if decoded_text_content:
+            # Truncate if very long to avoid exceeding token limits.
+            # This is a key challenge: how much context can the model handle?
+            # Sonar models have context windows (e.g., 4K, 8K, 32K tokens). 1 token ~ 4 chars.
+            max_chars_for_prompt = 16000 # Approx 4k tokens for text, adjust based on model's actual context window
+            if len(decoded_text_content) > max_chars_for_prompt:
+                snippet = decoded_text_content[:max_chars_for_prompt] + "\n... (Report content truncated in prompt due to length. Analysis will be based on this snippet.)"
+                processed_file_content_for_prompt = (
+                    f"The following is a TRUNCATED text representation (or binary context description) of the file content. "
+                    f"Analyze based on this available information. If critical information seems missing due to truncation, please state so.\n'''\n{snippet}\n'''"
                 )
             else:
-                file_content_prompt_segment = (
-                    f"The following is the Base64 encoded content of the uploaded file. "
-                    f"Please analyze it as a medical report:\n{b64_content}"
+                processed_file_content_for_prompt = (
+                    f"The following is the text representation (or binary context description) of the uploaded file. "
+                    f"Please analyze it as a medical report:\n'''\n{decoded_text_content}\n'''"
                 )
         
+        # System prompt does NOT reference file_content_prompt_segment directly.
+        # It gives general instructions on how to behave when report content is provided in the user message.
         system_prompt = (
-            "You are an AI Medical Report Analyzer. The user has uploaded their medical report. "
-            "Your task is to analyze the provided content. "
+            "You are 'sonar-reasoning-pro', an AI Medical Report Analyzer. The user has uploaded their medical report. "
+            "Your task is to analyze the provided text content of the report given in the user's message. "
             "1. Summarize key findings. Explain abnormalities or values outside normal ranges in simple terms. "
-            "2. Suggest potential implications. "
-            "3. Provide actionable advice (lifestyle, precautions, specialist consultation). "
-            "4. If user_region is provided, list 1-2 relevant government health schemes. "
-            "5. If specialist consultation is advised, mention relevant doctor specialties. "
-            "6. Note any data that could be plotted (e.g., a series of lab values over time, if present *in this single report*) and provide it if simple. "
+            "2. Suggest potential implications or areas of concern based on the findings. "
+            "3. Provide actionable advice: lifestyle changes, precautions, or if specialist consultation is needed. "
+            "4. If user_region is provided, list 1-2 relevant government health schemes. Mention source if known. "
+            "5. If specialist consultation is advised, mention relevant doctor specialties. Mention source/reasoning if possible. "
+            "6. If the report contains series of lab values or data that can be simply plotted (e.g., blood sugar over 3 readings *within this report*), provide data for 1-2 simple charts. "
             "7. Prepare a summary for the user's medical record. "
-            "IMPORTANT: Respond ONLY with a single, valid JSON object string. The JSON object should have these top-level keys: "
+            "CRITICAL OUTPUT FORMAT: Respond ONLY with a single, valid JSON object string. The JSON object MUST have these top-level keys: "
             "'answer_markdown' (string: your detailed analysis in Markdown), "
-            "'disease_identification' (string: tentative findings, e.g., 'Elevated liver enzymes noted.'), "
-            "'next_steps' (list of strings), "
-            "'government_schemes' (list of objects: 'name', 'description', 'region_specific'), "
-            "'doctor_recommendations' (list of objects: 'specialty', 'reason'), "
-            "'graphs_data' (list of graph objects: 'type', 'title', 'labels', 'datasets' (list of {'label':string, 'data':list_of_numbers})), "
-            "'extracted_medical_info' (object: 'report_name', 'key_findings_list', 'abnormal_values_dict', 'potential_diagnoses_mentioned_list'). "
-            "If the file content is uninterpretable, not a medical report, or too truncated for meaningful analysis, state that in 'answer_markdown'."
+            "'disease_identification_text' (string: tentative findings, e.g., 'Elevated liver enzymes noted.'), "
+            "'next_steps_list' (list of strings), "
+            "'government_schemes_list' (list of objects: 'name', 'description', 'region_specific', 'source_info'), "
+            "'doctor_recommendations_list' (list of objects: 'specialty', 'reason', 'source_info'), "
+            "'graphs_data_list' (list of graph objects: 'type', 'title', 'labels', 'datasets' (list of {'label':string, 'data':list_of_numbers}), 'source' (optional string)), "
+            "'extracted_medical_info_dict' (object: 'report_name', 'analysis_date', 'key_findings_list', 'abnormal_values_dict', 'potential_diagnoses_mentioned_list'). "
+            "If the file content is uninterpretable, not a medical report, or too truncated/unclear for meaningful analysis, state that clearly in 'answer_markdown'."
+            "Any internal thought process or planning MUST be enclosed in <think>Your thought here</think> tags. These <think> tags can be anywhere in your response string *before* the final JSON output, but the JSON itself must be clean."
         )
+
+        # User prompt INCLUDES the processed_file_content_for_prompt
         user_prompt = (
             f"Relevant User History (for context):\n{history_context}\n\n"
             f"User's Stated Region: {user_region or 'Not Specified'}\n\n"
-            f"Uploaded File Information: Name='{file_info['name']}', Type='{file_info['type']}', Size (bytes)='{file_info['size']}'.\n\n"
-            f"File Content Context:\n{file_content_prompt_segment}\n\n"
+            f"Uploaded File Information: Name='{file_info['name']}', Type='{file_info['type']}', Original Size (bytes)='{file_info['size']}'.\n\n"
+            f"Extracted File Content (or context of binary file) for Analysis:\n{processed_file_content_for_prompt}\n\n" # Using the correctly defined variable
             "Please provide your analysis of this medical report ONLY as a single JSON object string with the specified keys."
         )
 
-        # This task might require a model with a larger context window and more tokens for the response.
-        raw_response = await self._call_perplexity_api(system_prompt, user_prompt, self.personal_report_model, max_tokens=3500, temperature=0.3)
-        parsed_response = self._parse_ai_response_to_structured_output(raw_response, "personal_report_upload")
+        raw_response = await self._call_perplexity_api(system_prompt, user_prompt, self.personal_report_model, max_tokens=3500, temperature=0.2)
+        parsed_response = self._parse_ai_response_to_structured_output(raw_response, "personal_report_upload", self.personal_report_model)
         
         parsed_response["file_processed_with_message"] = file_info.get("name")
-        # Ensure extracted_medical_info has report name
-        if isinstance(parsed_response.get("extracted_medical_info"), dict):
-            parsed_response["extracted_medical_info"]["report_name"] = file_info['name']
-            # For MedicalMemory to store structured report info:
-            parsed_response["extracted_medical_info"]["reports_analyzed_info"] = [{
-                "name": file_info['name'],
-                "findings_summary_placeholder": parsed_response.get("answer", "Analysis performed.")[:100] # Brief summary
-            }]
-        else: # Initialize if missing
-            parsed_response["extracted_medical_info"] = {
-                "report_name": file_info['name'],
-                "reports_analyzed_info": [{"name": file_info['name'], "findings_summary_placeholder": "Analysis performed."[:100]}]
-            }
+        emi = parsed_response.get("extracted_medical_info", {}) # Get existing or empty dict
+        if not isinstance(emi, dict): emi = {} # Ensure it's a dict
+
+        emi["report_name"] = file_info['name']
+        emi["analysis_date"] = datetime.utcnow().isoformat() + "Z"
+        
+        # This structure is for MedicalMemory's update_medical_summary
+        # It expects 'reports_analyzed_info_item' to be a single item dict
+        emi["reports_analyzed_info_item"] = {
+            "name": file_info['name'],
+            "date_analyzed": emi["analysis_date"],
+            "key_findings_summary": (isinstance(parsed_response.get("answer"), str) and parsed_response.get("answer")[:150]) or "Analysis performed."
+        }
+        parsed_response["extracted_medical_info"] = emi # Assign back the updated/created emi
             
-        return parsed_response
+        return parsed_response 
+

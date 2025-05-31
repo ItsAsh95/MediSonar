@@ -1,50 +1,147 @@
-/* style.css */
+/* medical-assistant/static/css/style.css */
 
 html, body {
-    height: 100%;
-    overflow: hidden; /* Prevent double scrollbars if sidebar fixed */
+    height: 100vh; /* Use vh for full viewport height */
+    overflow: hidden; 
+    font-size: 15px; /* Base font size */
 }
 
-.app-container {
-    height: calc(100vh - 56px); /* 56px is typical navbar height */
+.app-navbar {
+    background-color: var(--navbar-bg);
+    color: var(--navbar-text);
+    padding: 0.5rem 1rem;
+    flex-shrink: 0; /* Prevent navbar from shrinking */
+    border-bottom: 1px solid rgba(0,0,0,0.1); /* Subtle border */
+}
+body.dark-mode .app-navbar {
+    border-bottom: 1px solid var(--border-color);
+}
+.navbar-brand-group {
+    display: flex;
+    align-items: center;
+}
+.app-logo {
+    height: 30px; /* Adjust as needed */
+    width: auto;
+    margin-right: 0.75rem;
+    /* Add filter for dark mode if your logo doesn't look good */
+    /* body.dark-mode & { filter: invert(1) hue-rotate(180deg); } */
+}
+.navbar-title {
+    font-size: 1.25rem;
+    font-weight: 500;
+    color: var(--navbar-title-text);
+}
+#currentModeDisplay {
+    font-weight: 500;
+    color: var(--navbar-text);
+}
+.nav-control-btn {
+    color: var(--nav-control-btn-text) !important; /* Override Bootstrap */
+    border-color: var(--nav-control-btn-border) !important;
+    margin-left: 0.5rem;
+}
+.nav-control-btn:hover {
+    background-color: var(--nav-control-btn-hover-bg) !important;
+}
+
+
+.app-layout {
+    display: flex;
+    height: calc(100vh - 56px); /* Navbar height might vary, adjust if needed */
+}
+
+.sidebar-nav {
+    width: 240px; /* Adjust as needed */
+    background-color: var(--sidebar-bg);
+    padding: 1rem 0;
     display: flex;
     flex-direction: column;
+    flex-shrink: 0;
+    border-right: 1px solid var(--border-color);
+    overflow-y: auto;
+}
+.nav-btn {
+    display: flex;
+    align-items: center;
+    padding: 0.75rem 1.25rem;
+    border: none;
+    background-color: transparent;
+    color: var(--sidebar-text);
+    text-align: left;
+    width: 100%;
+    border-radius: 0; /* Flat style */
+    transition: background-color 0.2s ease, color 0.2s ease;
+}
+.nav-btn i {
+    margin-right: 0.75rem;
+    width: 20px; /* For alignment */
+    text-align: center;
+    color: var(--sidebar-icon-color);
+}
+.nav-btn:hover {
+    background-color: var(--sidebar-hover-bg);
+    color: var(--text-color); /* Use main text color on hover for better contrast */
+}
+body.dark-mode .nav-btn:hover {
+    color: var(--text-color);
+}
+.nav-btn.active {
+    background-color: var(--sidebar-active-bg);
+    color: var(--sidebar-active-text);
+    font-weight: 500;
+}
+.nav-btn.active i {
+    color: var(--sidebar-active-icon-color);
+}
+.nav-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+.nav-btn:disabled:hover {
+    background-color: transparent; /* No hover effect for disabled */
 }
 
-.app-container > .row {
+.chat-area-wrapper {
     flex-grow: 1;
-    overflow: hidden; /* Key for fixed sidebar and scrollable content */
-}
-
-.sidebar {
-    height: 100%; /* Fill the row height */
-    overflow-y: auto; /* Scroll sidebar if content exceeds height */
-}
-
-.main-content {
-    height: 100%; /* Fill the row height */
     display: flex;
     flex-direction: column;
-    padding-left: 15px;
-    padding-right: 15px;
-}
-
-#chat-window-container {
-    flex-grow: 1;
-    overflow-y: auto; /* This makes the chat window scrollable */
-    margin-bottom: 1rem; /* Space before input area */
-}
-
-#chat-window {
-    background-color: var(--card-bg-color); /* Use theme variable */
-    border: 1px solid var(--border-color);
-    border-radius: .25rem;
     padding: 1rem;
-    display: flex;
-    flex-direction: column;
-    gap: 0.75rem; /* Space between messages */
+    overflow: hidden; /* Important for child scrolling */
+    background-color: var(--background-color);
 }
 
+.chat-header {
+    padding-bottom: 0.75rem;
+    border-bottom: 1px solid var(--border-color);
+    margin-bottom: 0.75rem;
+    flex-shrink: 0;
+}
+.dynamic-greeting {
+    color: var(--dynamic-greeting-text);
+    font-weight: 500;
+    font-size: 1.1rem;
+    margin-bottom: 0.5rem;
+}
+.region-selector label { /* Already styled by BS, but ensure text color theming */
+    color: var(--text-color);
+    font-size: 0.85rem;
+    margin-bottom: 0.25rem;
+}
+.region-selector .form-control-sm {
+    background-color: var(--input-bg);
+    color: var(--input-text);
+    border-color: var(--input-border);
+}
+
+#activeChatWindow {
+    flex-grow: 1;
+    overflow-y: auto;
+    padding: 0.5rem; /* Padding inside the scrollable area */
+    background-color: var(--card-bg-color); /* Chat window distinct background */
+    border-radius: 0.25rem;
+    border: 1px solid var(--border-color);
+}
 .message-container {
     display: flex;
     max-width: 85%;
@@ -76,7 +173,7 @@ html, body {
     line-height: 1.5;
 }
 .message-content p:last-child { margin-bottom: 0; } /* Remove extra margin from Markdown rendered p */
-.message-content ul, .message-content ol { margin-left: 1.2rem; }
+.message-content ul, .message-content ol { margin-left: 1.2rem; padding-left: 0.5rem; }
 .message-content pre {
     background-color: rgba(0,0,0,0.05);
     padding: 0.5rem;
@@ -111,22 +208,93 @@ body.dark-mode .message-content pre {
     padding-top: 0.5rem; /* Space above input */
     border-top: 1px solid var(--border-color);
 }
-#userInput {
+
+.ai-message-controls { text-align: right; }
+.ai-message-controls .copy-btn {
+    font-size: 0.75rem;
+    padding: 0.15rem 0.4rem;
+    opacity: 0.7;
+    transition: opacity 0.2s ease;
+}
+.ai-message-outer:hover .copy-btn { opacity: 1; }
+
+
+.input-section {
+    padding-top: 0.75rem;
+    border-top: 1px solid var(--border-color);
+    flex-shrink: 0;
+}
+.file-preview-main {
+    font-size: 0.8rem;
+    color: var(--secondary-color);
+}
+.remove-file-btn-main {
+    font-size: 0.7rem;
+    padding: 0.1rem 0.3rem;
+    line-height: 1;
+}
+.main-input-group {
+    display: flex;
+    align-items: flex-end; /* For textarea vertical alignment */
+    gap: 0.5rem;
+}
+.main-chat-input {
     flex-grow: 1;
-    resize: none; /* Prevent manual resize */
+    resize: none;
     background-color: var(--input-bg);
-    color: var(--text-color);
-    border-color: var(--input-border);
-    max-height: 150px; /* Limit textarea growth */
+    color: var(--input-text);
+    border: 1px solid var(--input-border); /* Default border */
+    border-radius: 0.25rem;
+    padding: 0.5rem 0.75rem;
+    min-height: 40px; /* Initial height */
+    max-height: 150px;
     overflow-y: auto;
+    /* Gradient border effect - more complex, often done with pseudo-elements or background images */
+    /* Simple gradient background for the input itself: */
+    /* background-image: linear-gradient(to right, var(--gradient-search-start), var(--gradient-search-end)); */
+    /* For border, you might need a wrapper div or pseudo-elements for a true gradient border */
 }
-#userInput:focus {
+.main-chat-input:focus {
     border-color: var(--input-focus-border);
-    box-shadow: 0 0 0 0.2rem rgba(var(--primary-color), 0.25);
+    box-shadow: 0 0 0 0.2rem var(--input-focus-shadow);
+}
+.file-upload-btn-main, .send-btn-main {
+    height: 40px; /* Match min-height of textarea */
+    flex-shrink: 0;
+    border-color: var(--button-light-border);
+    background-color: var(--button-light-bg);
+    color: var(--button-light-text);
+}
+.send-btn-main {
+    background-color: var(--button-primary-bg);
+    color: var(--button-primary-text);
+    border-color: var(--button-primary-bg);
+}
+.input-area-caption {
+    font-size: 0.75rem;
+    color: var(--secondary-color);
+    margin-top: 0.25rem;
 }
 
 
-/* For visually hiding elements but keeping them accessible */
+/* Modal Styling */
+.modal-content { background-color: var(--modal-bg); }
+.modal-header { border-bottom-color: var(--modal-header-border); }
+.modal-footer { border-top-color: var(--modal-footer-border); }
+.modal-header .close { color: var(--text-color); opacity: 0.7; }
+body.dark-mode .modal-header .close { filter: invert(1); } /* Simple invert for dark mode close X */
+
+#masterHistoryModalBody ul { padding-left: 0; }
+#masterHistoryModalBody li {
+    background-color: var(--message-avatar-bg); /* Slightly different bg for history items */
+    border: 1px solid var(--border-color);
+    border-radius: 0.25rem;
+}
+#masterHistoryModalBody strong { color: var(--primary-color); }
+body.dark-mode #masterHistoryModalBody strong { color: var(--link-color); }
+
+
+/* Visually hidden class for accessibility */
 .sr-only {
     position: absolute;
     width: 1px;
@@ -138,8 +306,7 @@ body.dark-mode .message-content pre {
     white-space: nowrap;
     border: 0;
 }
-
-.visually-hidden-input { /* Specifically for the file input if you choose class method */
+.visually-hidden-input { /* For the actual file input */
     position: absolute;
     width: 1px;
     height: 1px;
@@ -151,46 +318,27 @@ body.dark-mode .message-content pre {
     border: 0;
 }
 
-/* Styles moved from inline */
-#userRegionInputArea,
-#file-preview-area {
-    display: none; /* Initially hidden, JS will toggle */
+/* Gradient Search Bar - Example for mainUserInput */
+/* This is a simple background gradient. A true border gradient is more complex. */
+/* You might need to wrap the textarea in a div and style the div's border. */
+/*
+.main-chat-input-wrapper {
+    padding: 2px; // Controls thickness of "border"
+    background: linear-gradient(to right, var(--gradient-search-start), var(--gradient-search-end));
+    border-radius: 0.3rem; // Slightly larger than textarea's
 }
-
-#historyModalBody {
-    max-height: 70vh;
-    overflow-y: auto;
+.main-chat-input-wrapper textarea {
+    border: none !important; // Remove default border of textarea
+    border-radius: 0.25rem; // Inner radius
+    outline: none !important;
+    box-shadow: none !important;
 }
-
-.file-upload-btn, .send-btn {
-    height: calc(1.5em + .75rem + 2px); /* Match Bootstrap default input height */
-    flex-shrink: 0;
-}
-
-.loading-indicator .message-content {
-    font-style: italic;
-}
-
-#file-preview-area button {
-    margin-left: 5px;
-    padding: 0.1rem 0.4rem;
-    font-size: 0.8rem;
-}
-
-/* Chart Area Styling */
-.chart-container {
-    margin-top: 1rem;
-    padding: 1rem;
-    background-color: var(--card-bg-color);
-    border: 1px solid var(--border-color);
-    border-radius: .25rem;
-}
-.chart-container h5 {
-    margin-bottom: 0.75rem;
-    color: var(--text-color);
-}
-.chart-canvas-wrapper {
-    position: relative;
-    height: 300px; /* Adjust as needed */
-    width: 100%;
-}
+*/
+/* If using the wrapper, your HTML for input-group would change:
+<div class="main-input-group">
+    <div class="main-chat-input-wrapper flex-grow-1">
+        <textarea id="mainUserInput" ...></textarea>
+    </div>
+    ... buttons ...
+</div>
+*/
