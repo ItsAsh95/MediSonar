@@ -1,8 +1,8 @@
 import httpx, html, json, re, datetime
 from typing import Dict, Any, Optional, List
 
-from ..config import settings  # Relative import: .. means "go up one directory"
-from ..api.models import AISchemeInfo, AIDoctorRecommendation, AIGraphData # .. then into api
+from ..config import settings 
+from ..api.models import AISchemeInfo, AIDoctorRecommendation, AIGraphData
 
 ExtractedMedicalInfo = Dict[str, Any]
 
@@ -24,9 +24,7 @@ class AIInteractionHandler:
         user_prompt: str,
         model_name: str,
         max_tokens: int = 2048,
-        temperature: float = 0.3, # Slightly lower for more factual/consistent responses
-        # Additional parameters can be added here if needed for specific models/tasks
-        # e.g., top_p=0.9, frequency_penalty=0.0, presence_penalty=0.0
+        temperature: float = 0.3,   
     ) -> str:
         if not self.api_key:
             return "Error: API Key not configured on the server."
@@ -37,7 +35,7 @@ class AIInteractionHandler:
             "messages": messages,
             "max_tokens": max_tokens,
             "temperature": temperature
-            # Add other params like top_p, frequency_penalty here if you want to tune them
+            
             # "top_p": 0.9,
             # "frequency_penalty": 0.1,
         }
@@ -50,7 +48,7 @@ class AIInteractionHandler:
 
         print(f"--- Sending Request to Perplexity (ai_handler) ---")
         print(f"Model: {model_name}")
-        # print(f"Payload Messages: {json.dumps(messages, indent=2)}") # Log messages separately for clarity
+        
 
         try:
             async with httpx.AsyncClient(timeout=timeout_duration) as client:
@@ -90,87 +88,161 @@ class AIInteractionHandler:
     def _strip_think_blocks(self, text_with_thoughts: str) -> str:
         """Removes <think>...</think> blocks from text, case-insensitive, handles newlines."""
         if not text_with_thoughts: return ""
+        # More robust: find JSON block after the LAST </think> tag, or the first JSON block if no think tags
+        last_think_end = text_with_thoughts.rfind("</think>")
+        if last_think_end != -1:
+            candidate_text = text_with_thoughts[last_think_end + len("</think>"):]
+        else:
+            candidate_text = text_with_thoughts
+        
+        # Try to extract ```json ... ``` block first
+        match_json_block = re.search(r"```json\s*(\{[\s\S]*?\})\s*```", candidate_text, re.IGNORECASE | re.DOTALL)
+        if match_json_block:
+            print("Found ```json block after stripping/considering <think> tags.")
+            return match_json_block.group(1).strip()
+
+        # If no ```json block, try to find a raw JSON object
+        match_raw_json = re.search(r"^\s*(\{[\s\S]*\})\s*$", candidate_text.strip(), re.DOTALL)
+        if match_raw_json:
+            print("Found raw JSON object after stripping/considering <think> tags.")
+            return match_raw_json.group(1).strip()
+            
+        # Fallback: general <think> stripping if specific JSON extraction failed
+        print("No clear JSON block found after </think> or as raw JSON. Performing general <think> stripping on original text.")
         return re.sub(r"<think>.*?</think>", "", text_with_thoughts, flags=re.DOTALL | re.IGNORECASE).strip()
 
     def _parse_ai_response_to_structured_output(self, raw_response_text: str, mode: str, model_used: str) -> Dict[str, Any]:
-        output = { # Initialize with all ChatMessageOutput fields as None or empty
-        "answer": cleaned_response_text, # Default to cleaned text if JSON fails
-        "answer_format": "markdown",
-        "follow_up_questions": None, "disease_identification": None, "next_steps": None,
-        "government_schemes": None, "doctor_recommendations": None, "graphs_data": None,
-        "error": None, "file_processed_with_message": None, "extracted_medical_info": {}
-            }
-        print(f"--- PARSING AI RESPONSE (Mode: {mode}, Model: {model_used}) ---")
-        print(f"RAW RESPONSE TEXT (first 500 chars): {raw_response_text[:500]}")
+        
 
-        if not raw_response_text or raw_response_text.startswith("Error:"):
-            output["answer"] = raw_response_text or "Error: Empty response from AI."
-            output["error"] = raw_response_text or "Error: Empty response from AI."
+        # Initialize output structure with safe defaults
+        output = {
+            "answer": "AI response processing failed or was empty.", # Safe default
+            "answer_format": "markdown",
+            "follow_up_questions": None, "disease_identification": None, "next_steps": None,
+            "government_schemes": None, "doctor_recommendations": None, "graphs_data": None,
+            "error": None, "file_processed_with_message": None, "extracted_medical_info": {}
+        }
+
+        if not raw_response_text or raw_response_text.strip() == "":
+            output["answer"] = "Error: AI returned an empty response."
+            output["error"] = "AI returned an empty response."
+            print(f"Final Parsed Output (empty raw response): {output}")
+            return output
+            
+        if raw_response_text.startswith("Error:"): # If _call_perplexity_api itself returned an error string
+            output["answer"] = raw_response_text
+            output["error"] = raw_response_text
+            print(f"Final Parsed Output (API call error): {output}")
             return output
 
-        # Strip <think> blocks first, especially if using sonar-reasoning-pro
+        # If we reach here, raw_response_text has content and is not an error from our HTTP call function
         cleaned_response_text = self._strip_think_blocks(raw_response_text)
-        print(f"CLEANED RESPONSE TEXT (after <think> strip, first 500 chars): {cleaned_response_text[:500]}")
-        if not cleaned_response_text and raw_response_text: # If stripping thoughts left nothing
-            print(f"Warning: Stripping <think> blocks left an empty response for mode '{mode}'. Original length: {len(raw_response_text)}")
-            # Keep the original raw response if stripping thoughts removed everything meaningful (e.g. if AI put everything in thoughts)
-            cleaned_response_text = raw_response_text if len(raw_response_text) < 500 else raw_response_text[:500] + "... (content was mostly in think blocks)"
+        print(f"CLEANED RESPONSE (after <think> strip, first 500 chars): {cleaned_response_text[:500]}")
 
+        if not cleaned_response_text.strip():
+            output["answer"] = "AI response was empty after processing internal thoughts."
+            output["error"] = "AI response empty post-processing."
+            print(f"Final Parsed Output (empty after think strip): {output}")
+            return output
+        
+        # Default answer is now the cleaned text, which will be overwritten if JSON parsing is successful for structured modes
+        output["answer"] = cleaned_response_text 
 
-        # Attempt to parse JSON if expected for the mode (Symptoms, Report)
         if mode in ["personal_symptoms", "personal_report_upload"]:
             try:
                 json_candidate = cleaned_response_text
-                print(f"JSON CANDIDATE (first 500 chars): {json_candidate[:500]}")
                 if cleaned_response_text.strip().startswith("```json"):
-                    json_candidate = cleaned_response_text.split("```json", 1)[1].split("```", 1)[0].strip()
-                elif not (cleaned_response_text.strip().startswith("{") and cleaned_response_text.strip().endswith("}")):
-                    # If not clearly JSON, assume it's markdown and set as answer directly for these modes
-                    # This might happen if the AI fails to produce JSON despite the prompt
-                    print(f"Warning: Expected JSON for mode '{mode}' but received non-JSON like text after stripping thoughts. Treating as answer_markdown.")
-                    output["answer"] = cleaned_response_text
-                    return output
+                    # Extract content within ```json ... ```
+                    match = re.search(r"```json\s*([\s\S]*?)\s*```", cleaned_response_text, re.IGNORECASE)
+                    if match:
+                        json_candidate = match.group(1).strip()
+                    else: # Fallback if ```json is present but no closing ``` or malformed
+                        json_candidate = cleaned_response_text.split("```json", 1)[1].strip()
+                
+                # Only attempt to parse if it looks like a JSON object
+                if not (json_candidate.strip().startswith("{") and json_candidate.strip().endswith("}")):
+                    print(f"Warning: Expected JSON for mode '{mode}' but received non-JSON like text after stripping thoughts. Content snippet: {json_candidate[:200]}")
+                    # output["answer"] is already set to cleaned_response_text, which is appropriate here.
+                    # We might set an error note if strict JSON was absolutely required.
+                    # output["error"] = f"AI did not return the expected JSON structure for {mode}."
+                    print(f"Final Parsed Output (non-JSON for structured mode): {output}")
+                    return output 
 
+                print(f"JSON CANDIDATE for mode '{mode}' (first 500 chars): {json_candidate[:500]}")
                 data = json.loads(json_candidate)
-                print(f"SUCCESSFULLY PARSED JSON DATA: {json.dumps(data, indent=2)}")
                 print(f"Successfully parsed JSON from AI response for mode '{mode}'.")
                 
-                output["answer"] = data.get("answer_markdown", data.get("summary", "AI provided structured data but no primary answer text."))
-                output["follow_up_questions"] = data.get("follow_up_questions")
-                output["disease_identification"] = data.get("disease_identification")
-                output["next_steps"] = data.get("next_steps")
-                output["government_schemes"] = [AISchemeInfo(**s) for s in data.get("government_schemes", []) if isinstance(s, dict)]
-                output["doctor_recommendations"] = [AIDoctorRecommendation(**dr) for dr in data.get("doctor_recommendations", []) if isinstance(dr, dict)]
-                output["graphs_data"] = [AIGraphData(**gd) for gd in data.get("graphs_data", []) if isinstance(gd, dict)]
-                output["extracted_medical_info"] = data.get("extracted_medical_info", {})
-                if output["answer"] == "AI provided structured data but no primary answer text.":
-                    if data.get("answer"): output["answer"] = data.get("answer")
-                    elif data.get("response"): output["answer"] = data.get("response")
+                # Map AI's JSON keys to our output structure
+                output["answer"] = data.get("answer_markdown", cleaned_response_text) # Prioritize answer_markdown from JSON
+                output["follow_up_questions"] = data.get("follow_up_questions_list")
+                output["disease_identification"] = data.get("disease_identification_text")
+                output["next_steps"] = data.get("next_steps_list")
+                # Ensure list comprehensions handle None gracefully if a key is missing
+                output["government_schemes"] = [AISchemeInfo(**s) for s in data.get("government_schemes_list", []) if isinstance(s, dict)]
+                output["doctor_recommendations"] = [AIDoctorRecommendation(**dr) for dr in data.get("doctor_recommendations_list", []) if isinstance(dr, dict)]
+                output["graphs_data"] = [AIGraphData(**gd) for gd in data.get("graphs_data_list", []) if isinstance(gd, dict)]
+                output["extracted_medical_info"] = data.get("extracted_medical_info_dict", {})
+                
+                # If 'answer_markdown' was missing but other specific answer keys exist in JSON
+                if output["answer"] == cleaned_response_text and data.get("summary"):
+                    output["answer"] = data.get("summary")
+                elif output["answer"] == cleaned_response_text and data.get("answer"): # Generic 'answer' key in JSON
+                    output["answer"] = data.get("answer")
+
 
             except json.JSONDecodeError as e:
-                print(f"AI response for mode '{mode}' was not valid JSON after stripping thoughts: {e}. Content snippet: {cleaned_response_text[:200]}")
-                output["answer"] = cleaned_response_text # Fallback to showing the cleaned (non-JSON) text
-                output["error"] = f"AI failed to provide valid JSON for {mode}."
-            except Exception as e:
-                print(f"Error parsing AI response structure for mode '{mode}': {e}. Using raw (cleaned) text.")
-                output["answer"] = cleaned_response_text
-                output["error"] = f"Error processing AI response structure for {mode}: {str(e)}"
-        else: # For "qna" mode or other modes not expecting strict JSON
-            output["answer"] = cleaned_response_text
-            # For QnA, try to extract "related topics" if AI includes a specific phrase
-            marker = "You might also be interested in knowing about:"
-            if marker.lower() in cleaned_response_text.lower():
-                parts = re.split(marker, cleaned_response_text, flags=re.IGNORECASE)
-            if len(parts) > 1:
-                output["answer"] = parts[0].strip() # Main answer
-                # Simple split for suggestions, assumes they are list-like or simple questions
-                suggestions_text = parts[1].strip()
-                # Rudimentary split of suggestions, could be improved
-                suggestions = [s.strip() for s in re.split(r'\s*\b(?:or|and|,)\b\s*|\s*\?\s*', suggestions_text) if s.strip()]
-                output["follow_up_questions"] = suggestions # Repurpose this field
-                print(f"Extracted QnA follow-up suggestions: {suggestions}")
-                pass
-        print(f"FINAL PARSED OUTPUT DICT for mode '{mode}': {output}")
+                print(f"JSON PARSE FAILED for mode '{mode}': {e}. Content snippet: {cleaned_response_text[:200]}")
+                # output["answer"] is already cleaned_response_text, which is the best we can do.
+                output["error"] = f"AI response for {mode} was not valid JSON (after cleaning attempts)."
+            except Exception as e_parse: # Catch other potential errors during mapping
+                print(f"Error mapping parsed JSON to output structure for mode '{mode}': {e_parse}")
+                output["error"] = f"Error processing AI's structured response for {mode}."
+        
+        elif mode == "qna": # QnA mode specific parsing for sources and follow-ups
+            # The variable 'cleaned_response_text' is already the primary content for QnA at this point.
+            # We will parse sections from it.
+            
+            text_for_qna_parsing = cleaned_response_text
+            parsed_qna_answer = text_for_qna_parsing # Start with everything
+            final_follow_ups = None
+            final_sources_text = None
+
+            # 1. Extract "Further Exploration:"
+            further_explore_marker = "Further Exploration:"
+            match_fe = re.search(f"^(.*?){re.escape(further_explore_marker)}(.*)", text_for_qna_parsing, flags=re.IGNORECASE | re.DOTALL | re.MULTILINE)
+            if match_fe:
+                text_before_fe = match_fe.group(1).strip()
+                further_exploration_content = match_fe.group(2).strip()
+                if further_exploration_content:
+                    suggestions = [s.strip() for s in re.split(r'\s*\n\s*|\s*-\s*(?=[A-Z])|\s*\d+\.\s*|\s*\?\s*|\s*;\s*', further_exploration_content) if s.strip() and len(s) > 5]
+                    final_follow_ups = suggestions[:2]
+                text_for_qna_parsing = text_before_fe # Update text for next parsing step
+
+            # 2. Extract "## Sources:"
+            sources_marker = "## Sources:"
+            match_sources = re.search(f"^(.*?){re.escape(sources_marker)}(.*)", text_for_qna_parsing, flags=re.IGNORECASE | re.DOTALL | re.MULTILINE)
+            if match_sources:
+                parsed_qna_answer = match_sources.group(1).strip()
+                final_sources_text = match_sources.group(2).strip()
+            else: # No sources marker found, the remaining text is the answer
+                parsed_qna_answer = text_for_qna_parsing.strip()
+
+            output["answer"] = parsed_qna_answer
+            if final_sources_text:
+                output["answer"] += f"\n\n---\n**Sources:**\n{final_sources_text}"
+            elif sources_marker.lower() in cleaned_response_text.lower(): # Marker was there but no content after
+                output["answer"] += f"\n\n---\n**Sources:**\nGeneral medical knowledge."
+            
+            if final_follow_ups:
+                output["follow_up_questions"] = final_follow_ups
+        
+        # Fallback if parsing left answer empty but cleaned_response_text had content
+        if not output["answer"].strip() and cleaned_response_text.strip():
+             output["answer"] = cleaned_response_text
+             output["error"] = "Internal parsing logic resulted in empty answer; showing cleaned AI response."
+
+
+        print(f"Final Parsed Output for mode '{mode}': Answer snippet: {str(output.get('answer'))[:100]}..., Error: {output.get('error')}")
         return output
     
     async def get_general_qna_answer(self, question: str, history_context: str, file_info: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
@@ -368,9 +440,8 @@ class AIInteractionHandler:
             parsed_output["answer"] = parsed_output.pop("answer_markdown") # Use specific key for main answer
         return parsed_output
     
-# medical-assistant/utils/ai_handler.py
 
-# ... (imports and class definition as before) ...
+
 
     async def analyze_uploaded_personal_report(self, file_info: Dict[str, Any], history_context: str, user_region: Optional[str]) -> Dict[str, Any]:
         # This variable will hold the text to be inserted into the user_prompt

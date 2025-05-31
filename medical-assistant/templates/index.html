@@ -14,7 +14,7 @@
         <div class="navbar-brand-group">
             <!-- Assuming you'll add an actual logo image later -->
             <img src="{{ url_for('static', path='assets/dsicon.jpg') }}" alt="Site Logo" id="appLogo" class="app-logo">
-            <span class="navbar-title">AI Medical Assistant</span>
+            <span class="navbar-title">MediConnect</span>
         </div>
         <div id="currentModeDisplay" class="navbar-text mx-auto" aria-live="polite">Mode: Ask Away</div>
         <div class="navbar-controls">
@@ -32,9 +32,12 @@
             <button class="nav-btn active" data-main-mode="qna" title="General Medical Q&A">
                 <i class="fas fa-comment-medical"></i> <span class="nav-btn-text">Ask Away</span>
             </button>
-            <button class="nav-btn" data-main-mode="symptoms" title="Analyze Your Symptoms">
+                  
+            <a href="/symptom-analyzer/" class="nav-btn" title="Analyze Your Symptoms">
                 <i class="fas fa-stethoscope"></i> <span class="nav-btn-text">Symptom Analyzer</span>
-            </button>
+            </a>
+
+    
             <button class="nav-btn" data-main-mode="report" title="Analyze Your Lab Report">
                 <i class="fas fa-file-medical-alt"></i> <span class="nav-btn-text">Report Diagnosis</span>
             </button>

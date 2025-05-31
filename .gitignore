@@ -27,6 +27,7 @@ MANIFEST
 # Environment variables
 .env
 .flaskenv
+.env.local
 
 # IDE / Editor specific
 .vscode/

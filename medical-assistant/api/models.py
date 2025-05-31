@@ -19,6 +19,7 @@ class AISchemeInfo(BaseModel):
     region_specific: Optional[str] = None
     description: Optional[str] = None
     url: Optional[str] = None
+    source_info: Optional[str] = None # Added for consistency
 
 class AIDoctorRecommendation(BaseModel):
     specialty: str
@@ -44,3 +45,30 @@ class ChatMessageOutput(BaseModel):
     error: Optional[str] = None
     # To aid frontend in knowing if file was processed with message:
     file_processed_with_message: Optional[str] = None # Name of the file included in this interaction
+
+# --- Models for React Symptom Analyzer Integration ---
+class ReactSymptomInput(BaseModel):
+    description: str
+    duration: str
+    severity: int # Expecting 1, 2, or 3
+
+class ReactAnalysisRequest(BaseModel):
+    symptoms: List[ReactSymptomInput]
+    user_region: Optional[str] = None # Add if React can send it
+    history_context_string: Optional[str] = None # For SPA to send its history summary
+
+class ReactConditionOutput(BaseModel):  
+    name: str
+    probability: float
+    description: str
+    recommendation: str
+
+class ReactSymptomAnalysisOutput(BaseModel):
+    id: str
+    date: str # ISO format string
+    symptoms: List[ReactSymptomInput]
+    possible_conditions: List[ReactConditionOutput]
+    general_advice: str
+    should_seek_medical_attention: bool
+    government_schemes: Optional[List[AISchemeInfo]] = None # Mirroring AISchemeInfo
+    doctor_specialties_recommended: Optional[List[str]] = None # List of specialty strings
