@@ -1,0 +1,1084 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Doctor Connect</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        /* Custom styles for scrollbar and other minor adjustments */
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f0f2f5; /* Light gray background */
+        }
+        /* Hide scrollbar for webkit browsers */
+        ::-webkit-scrollbar {
+            display: none;
+        }
+        /* Hide scrollbar for Firefox */
+        html {
+            scrollbar-width: none;
+        }
+        .doctor-card {
+            transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+            cursor: pointer; /* Indicate clickable cards */
+        }
+        .doctor-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+        }
+        .modal {
+            display: none; /* Hidden by default */
+            position: fixed; /* Stay in place */
+            z-index: 1000; /* Sit on top */
+            left: 0;
+            top: 0;
+            width: 100%; /* Full width */
+            height: 100%; /* Full height */
+            overflow: auto; /* Enable scroll if needed */
+            background-color: rgba(0,0,0,0.4); /* Black w/ opacity */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .modal-content {
+            background-color: #fefefe;
+            margin: auto;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+            max-width: 500px;
+            width: 90%;
+            position: relative;
+        }
+        .close-button {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+            position: absolute;
+            top: 10px;
+            right: 20px;
+            cursor: pointer;
+        }
+        .close-button:hover,
+        .close-button:focus {
+            color: black;
+            text-decoration: none;
+            cursor: pointer;
+        }
+        .time-slot {
+            cursor: pointer;
+            transition: all 0.2s ease-in-out;
+        }
+        .time-slot:hover {
+            background-color: #bfdbfe; /* blue-200 */
+        }
+        .time-slot.selected {
+            background-color: #3b82f6; /* blue-500 */
+            color: white;
+            font-weight: bold;
+        }
+        .sr-only {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            padding: 0;
+            margin: -1px;
+            overflow: hidden;
+            clip: rect(0, 0, 0, 0);
+            white-space: nowrap;
+            border: 0;
+        }
+        
+    </style>
+</head>
+<body class="bg-gray-100 min-h-screen flex flex-col items-center py-8 px-4">
+
+    <div class="w-full max-w-6xl bg-white rounded-xl shadow-lg p-8 md:p-10 lg:p-12">
+
+        <header class="mb-8 text-center">
+            <h1 class="text-4xl md:text-5xl font-extrabold text-blue-800 mb-2">Find Healthcare Professionals</h1>
+            <p class="text-lg md:text-xl text-gray-600">Search and connect with qualified doctors in your area</p>
+        </header>
+
+        <div id="main-listing-view">
+            <section class="mb-8 flex flex-col md:flex-row items-center justify-center gap-4">
+                <div class="relative w-full md:w-2/5">
+                    <!-- Added aria-label to search input -->
+                    <input type="text" id="search-input" placeholder="Search doctors, specialties, or hospitals..."
+                           class="w-full pl-10 pr-4 py-3 rounded-full border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-sm text-gray-700"
+                           aria-label="Search for doctors, specialties, or hospitals">
+                    <i class="fas fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+                </div>
+
+                <div class="relative w-full md:w-1/4">
+                    <!-- Added aria-label to specialty filter select -->
+                    <select id="specialty-filter"
+                            aria-label="Filter by Specialty"
+                            class="w-full pl-4 pr-10 py-3 rounded-full border border-gray-300 bg-white appearance-none focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-sm text-gray-700">
+                        <option value="">All Specialties</option>
+                        <!-- Options will be populated by JavaScript -->
+                    </select>
+                    <i class="fas fa-chevron-down absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 pointer-events-none"></i>
+                </div>
+
+                <div class="relative w-full md:w-1/4">
+                    <!-- Added aria-label to location filter select -->
+                    <select id="location-filter"
+                            aria-label="Filter by Location"
+                            class="w-full pl-4 pr-10 py-3 rounded-full border border-gray-300 bg-white appearance-none focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-sm text-gray-700">
+                        <option value="">All Locations</option>
+                        <!-- Options will be populated by JavaScript -->
+                    </select>
+                    <i class="fas fa-chevron-down absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 pointer-events-none"></i>
+                </div>
+
+                <div class="relative w-full md:w-1/4">
+                    <!-- Added aria-label to fee range filter select -->
+                    <select id="fee-range-filter"
+                            aria-label="Filter by Fee Range"
+                            class="w-full pl-4 pr-10 py-3 rounded-full border border-gray-300 bg-white appearance-none focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-sm text-gray-700">
+                        <option value="">All Fee Ranges</option>
+                        <!-- Options will be populated by JavaScript -->
+                    </select>
+                    <i class="fas fa-chevron-down absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 pointer-events-none"></i>
+                </div>
+
+                <div class="relative w-full md:w-1/4">
+                    <!-- Added aria-label to sort by filter select -->
+                    <select id="sort-by-filter"
+                            aria-label="Sort results by"
+                            class="w-full pl-4 pr-10 py-3 rounded-full border border-gray-300 bg-white appearance-none focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-sm text-gray-700">
+                        <option value="">Sort By</option>
+                        <option value="rating">Rating (High to Low)</option>
+                        <option value="experience">Experience (High to Low)</option>
+                        <option value="fee-asc">Fee (Low to High)</option>
+                        <option value="fee-desc">Fee (High to Low)</option>
+                    </select>
+                    <i class="fas fa-sort absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 pointer-events-none"></i> <!-- Changed from fa-chevron-down to fa-sort for clarity -->
+                </div>
+            </section>
+
+            <section class="mb-8 p-6 bg-blue-50 rounded-xl shadow-md flex flex-col md:flex-row items-center gap-4">
+                <label for="disease-input" class="text-blue-700 font-semibold text-lg md:w-1/4">Having a symptom or disease?</label>
+                <div class="relative w-full md:w-3/4">
+                    <input type="text" id="disease-input" placeholder="e.g., Fever, Headache, Skin Rash..."
+                           class="w-full pl-4 pr-10 py-3 rounded-full border border-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-600 shadow-sm text-gray-700">
+                    <i class="fas fa-stethoscope absolute right-3 top-1/2 transform -translate-y-1/2 text-blue-400"></i>
+                </div>
+            </section>
+
+            <section id="doctor-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <!-- Doctor cards will be rendered here by JavaScript -->
+            </section>
+
+            <div id="no-results" class="text-center text-gray-500 text-xl font-semibold mt-8 hidden">
+                No doctors found matching your criteria.
+            </div>
+        </div>
+
+        <div id="doctor-detail-view" class="hidden p-6 bg-white rounded-xl shadow-lg">
+            <button id="back-to-doctors-btn" class="mb-6 px-4 py-2 bg-gray-200 text-gray-800 rounded-full hover:bg-gray-300 transition duration-300 shadow-md">
+                <i class="fas fa-arrow-left mr-2"></i> Back to Doctors
+            </button>
+
+            <div class="flex flex-col md:flex-row items-center md:items-start gap-6 mb-8">
+                <img id="detail-profile-pic" src="" alt="Doctor Profile Photo" class="w-32 h-32 rounded-full border-4 border-blue-300 object-cover">
+                <div class="text-center md:text-left">
+                    <h2 id="detail-name" class="text-3xl font-bold text-gray-800 mb-1"></h2>
+                    <p id="detail-specialty" class="text-blue-600 font-semibold text-xl mb-2"></p>
+                    <div class="flex items-center justify-center md:justify-start gap-2 text-lg text-yellow-500 mb-2" aria-label="Doctor's rating">
+                        <i class="fas fa-star"></i> <span id="detail-rating"></span>
+                    </div>
+                    <p id="detail-experience" class="text-gray-700 text-lg mb-1"></p>
+                    <p id="detail-fee" class="text-green-600 font-bold text-2xl mb-1"></p>
+                    <p id="detail-location" class="text-gray-600 text-md mb-1"></p>
+                </div>
+            </div>
+
+            <div class="mb-8">
+                <h3 class="text-2xl font-bold text-blue-700 mb-3">About Dr. <span id="about-doctor-name"></span></h3>
+                <p id="detail-about" class="text-gray-700 leading-relaxed text-justify mb-4">
+                </p>
+                <h4 class="text-xl font-semibold text-gray-700 mb-2">Areas of Interest:</h4>
+                <div id="detail-areas-of-interest" class="flex flex-wrap gap-2">
+                    <!-- Areas of interest tags will be rendered here -->
+                </div>
+            </div>
+
+            <div class="mb-8">
+                <h3 class="text-2xl font-bold text-blue-700 mb-3">Languages Spoken</h3>
+                <div id="detail-languages" class="flex flex-wrap gap-2">
+                    <!-- Language tags will be rendered here -->
+                </div>
+            </div>
+
+            <div class="mb-8">
+                <h3 class="text-2xl font-bold text-blue-700 mb-3">Availability</h3>
+                <button id="view-slots-btn" class="px-5 py-2 bg-purple-600 text-white rounded-full hover:bg-purple-700 transition duration-300 shadow-md">
+                    <i class="fas fa-calendar-alt mr-2"></i> View Available Slots
+                </button>
+                <div id="availability-calendar" class="hidden mt-4 bg-purple-50 p-4 rounded-lg shadow-inner">
+                    <!-- Availability slots will be rendered here -->
+                </div>
+            </div>
+
+            <div class="flex flex-col sm:flex-row gap-4 justify-center">
+                <button id="detail-book-appointment-btn" class="px-6 py-3 bg-blue-600 text-white rounded-full hover:bg-blue-700 transition duration-300 shadow-md flex items-center justify-center">
+                    <i class="fas fa-calendar-check mr-2"></i> Book Appointment
+                </button>
+                <button id="detail-contact-btn" class="px-6 py-3 bg-gray-200 text-gray-800 rounded-full hover:bg-gray-300 transition duration-300 shadow-md flex items-center justify-center">
+                    <i class="fas fa-phone mr-2"></i> Contact
+                </button>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Appointment Modal -->
+    <div id="appointment-modal" class="modal hidden"> <!-- Ensure class 'hidden' is initially present -->
+        <div class="modal-content">
+            <span class="close-button" onclick="closeModal('appointment-modal')" aria-label="Close appointment booking form">×</span>
+            <h2 class="text-2xl font-bold mb-4 text-blue-700">Book Appointment with <span id="modal-doctor-name" class="font-semibold"></span></h2>
+
+            <form id="booking-form"> <!-- Added form tag for better semantics -->
+                <div class="mb-4">
+                    <label for="appointment-date" class="block text-gray-700 text-sm font-bold mb-2">Appointment Date:</label>
+                    <input type="date" id="appointment-date" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" required>
+                </div>
+                <div class="mb-4">
+                    <label for="appointment-time" class="block text-gray-700 text-sm font-bold mb-2">Preferred Time:</label>
+                    <input type="time" id="appointment-time" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" required>
+                </div>
+                <div class="mb-6">
+                    <label for="patient-name" class="block text-gray-700 text-sm font-bold mb-2">Your Name:</label>
+                    <input type="text" id="patient-name" placeholder="Your Full Name" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" required>
+                </div>
+                <!-- Changed to type="button" to prevent form submission if not intended, JS handles click -->
+                <button type="button" id="confirm-booking-btn" class="mt-6 px-6 py-3 bg-blue-600 text-white rounded-full hover:bg-blue-700 transition duration-300 shadow-md w-full" data-doctor-id="">Confirm Booking</button>
+            </form>
+            <div id="booking-status-message" class="hidden text-center mt-4"> <!-- Added margin-top -->
+                <!-- Booking status message will appear here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Contact Modal -->
+    <div id="contact-modal" class="modal hidden"> <!-- Ensure class 'hidden' is initially present -->
+        <div class="modal-content">
+            <span class="close-button" onclick="closeModal('contact-modal')" aria-label="Close contact information modal">×</span>
+            <h2 class="text-2xl font-bold mb-4 text-blue-700">Contact <span id="modal-contact-doctor-name" class="font-semibold"></span></h2>
+            <p class="text-gray-700 mb-4">You can reach the doctor using the number below:</p>
+            <p class="text-blue-700 font-bold text-xl mb-4"><i class="fas fa-phone-alt mr-2"></i> +91 98765 43210</p> <!-- Placeholder number -->
+            <a href="tel:+919876543210" class="inline-block mt-4 px-6 py-3 bg-green-600 text-white rounded-full hover:bg-green-700 transition duration-300 shadow-md">
+                <i class="fas fa-phone mr-2"></i> Call Now
+            </a>
+        </div>
+    </div>
+
+    <div id="contact-modal" class="modal hidden">
+        <div class="modal-content">
+            <span class="close-button" onclick="closeModal('contact-modal')">&times;</span>
+            <h2 class="text-2xl font-bold mb-4 text-blue-700">Contact <span id="modal-contact-doctor-name" class="font-semibold"></span></h2>
+            <p class="text-gray-700 mb-4">You can reach the doctor using the number below:</p>
+            <p class="text-blue-700 font-bold text-xl mb-4"><i class="fas fa-phone-alt mr-2"></i> +91 98765 43210</p>
+            <a href="tel:+919876543210" class="inline-block mt-4 px-6 py-3 bg-green-600 text-white rounded-full hover:bg-green-700 transition duration-300 shadow-md">
+                <i class="fas fa-phone mr-2"></i> Call Now
+            </a>
+        </div>
+    </div>
+
+    <script>
+        // Utility function to format dates for display
+        const getFormattedDate = (dateString) => {
+            const date = new Date(dateString);
+            const today = new Date();
+            const tomorrow = new Date();
+            tomorrow.setDate(today.getDate() + 1);
+
+            if (date.toDateString() === today.toDateString()) {
+                return "Today";
+            } else if (date.toDateString() === tomorrow.toDateString()) {
+                return "Tomorrow";
+            } else {
+                return date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+            }
+        };
+
+        // Utility function to format a Date object to YYYY-MM-DD string
+        const formatDateToYYYYMMDD = (date) => {
+            const year = date.getFullYear();
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const day = String(date.getDate()).padStart(2, '0');
+            return `${year}-${month}-${day}`;
+        };
+
+        // Sample Doctor Data (updated with structured availability and areasOfInterest)
+        const doctors = [
+            {
+                id: 1,
+                name: "Dr. Priya Sharma",
+                specialty: "Cardiologist",
+                rating: 4.8,
+                fee: 800,
+                experience: 15,
+                location: "All India Institute of Medical Sciences, Delhi, India",
+                availability: [
+                    { date: formatDateToYYYYMMDD(new Date()), slots: ["14:00", "15:00", "16:00"] },
+                    { date: formatDateToYYYYMMDD(new Date(new Date().setDate(new Date().getDate() + 1))), slots: ["10:00", "11:00", "12:00"] }
+                ],
+                languages: ["Hindi", "English"],
+                profilePic: "https://placehold.co/100x100/ADD8E6/000000?text=PS",
+                about: "Dr. Priya Sharma is a highly experienced cardiologist with a passion for patient care. She specializes in advanced cardiac imaging and interventional cardiology, providing comprehensive treatment for various heart conditions. Her commitment to continuous learning ensures she provides the most up-to-date and effective treatments.",
+                areasOfInterest: ["Interventional Cardiology", "Cardiac Imaging", "Heart Failure Management", "Preventive Cardiology"]
+            },
+            {
+                id: 2,
+                name: "Dr. John Smith",
+                specialty: "General Physician",
+                rating: 4.6,
+                fee: 120,
+                experience: 10,
+                location: "New York Presbyterian Hospital, New York, USA",
+                availability: [
+                    { date: formatDateToYYYYMMDD(new Date()), slots: ["09:00", "10:00", "11:00"] },
+                    { date: formatDateToYYYYMMDD(new Date(new Date().setDate(new Date().getDate() + 1))), slots: ["13:00", "14:00", "15:00"] }
+                ],
+                languages: ["English"],
+                profilePic: "https://placehold.co/100x100/ADD8E6/000000?text=JS",
+                about: "Dr. John Smith is a dedicated general physician focused on comprehensive primary care and preventative health. He believes in a patient-centered approach, ensuring each individual receives personalized and effective medical attention.",
+                areasOfInterest: ["Routine Check-ups", "Acute Illnesses", "Chronic Disease Management", "Vaccinations"]
+            },
+            {
+                id: 3,
+                name: "Dr. Emily White",
+                specialty: "Dermatologist",
+                rating: 4.9,
+                fee: 150,
+                experience: 8,
+                location: "London Skin Centre, London, UK",
+                availability: [
+                    { date: formatDateToYYYYMMDD(new Date()), slots: ["10:00", "11:00", "12:00"] },
+                    { date: formatDateToYYYYMMDD(new Date(new Date().setDate(new Date().getDate() + 1))), slots: ["14:00", "15:00", "16:00"] }
+                ],
+                languages: ["English"],
+                profilePic: "https://placehold.co/100x100/ADD8E6/000000?text=EW",
+                about: "Dr. Emily White is a highly-rated dermatologist specializing in advanced skin treatments and cosmetic procedures. She is committed to helping patients achieve healthy, radiant skin through personalized care and innovative solutions.",
+                areasOfInterest: ["Acne Treatment", "Anti-aging", "Eczema", "Psoriasis"]
+            },
+            {
+                id: 4,
+                name: "Dr. Kenji Tanaka",
+                specialty: "Orthopedic",
+                rating: 4.7,
+                fee: 1800,
+                experience: 20,
+                location: "Tokyo Orthopedic Clinic, Tokyo, Japan",
+                availability: [
+                    { date: formatDateToYYYYMMDD(new Date(new Date().setDate(new Date().getDate() + 1))), slots: ["09:00", "10:00", "11:00"] }
+                ],
+                languages: ["Japanese", "English"],
+                profilePic: "https://placehold.co/100x100/ADD8E6/000000?text=KT",
+                about: "Dr. Kenji Tanaka is a distinguished orthopedic surgeon known for his precision in joint replacement and sports injury rehabilitation. He combines traditional methods with cutting-edge techniques to ensure optimal patient recovery and mobility.",
+                areasOfInterest: ["Knee Replacement", "Shoulder Surgery", "Sports Injuries", "Arthroscopy"]
+            },
+            {
+                id: 5,
+                name: "Dr. Sofia Rossi",
+                specialty: "Pediatrician",
+                rating: 4.8,
+                fee: 90,
+                experience: 12,
+                location: "Bambino Clinic, Rome, Italy",
+                availability: [
+                    { date: formatDateToYYYYMMDD(new Date()), slots: ["11:00", "12:00", "13:00"] }
+                ],
+                languages: ["Italian", "English"],
+                profilePic: "https://placehold.co/100x100/ADD8E6/000000?text=SR",
+                about: "Dr. Sofia Rossi is a warm and caring pediatrician dedicated to the health and development of children from infancy through adolescence. She provides comprehensive care, focusing on preventative health and early intervention.",
+                areasOfInterest: ["Child Development", "Vaccinations", "Common Childhood Illnesses", "Adolescent Health"]
+            },
+            {
+                id: 6,
+                name: "Dr. Chen Wei",
+                specialty: "Neurologist",
+                rating: 4.5,
+                fee: 1000,
+                experience: 18,
+                location: "Beijing Neurological Institute, Beijing, China",
+                availability: [
+                    { date: formatDateToYYYYMMDD(new Date(new Date().setDate(new Date().getDate() + 1))), slots: ["09:30", "10:30", "11:30"] }
+                ],
+                languages: ["Mandarin", "English"],
+                profilePic: "https://placehold.co/100x100/ADD8E6/000000?text=CW",
+                about: "Dr. Chen Wei is a leading neurologist specializing in complex neurological disorders and neurodegenerative diseases. His research and clinical practice are at the forefront of modern neurology, offering advanced diagnostic and treatment options.",
+                areasOfInterest: ["Alzheimer's Disease", "Parkinson's Disease", "Epilepsy", "Stroke"]
+            },
+            {
+                id: 7,
+                name: "Dr. Maria Garcia",
+                specialty: "Ophthalmologist",
+                rating: 4.7,
+                fee: 110,
+                experience: 9,
+                location: "Madrid Eye Clinic, Madrid, Spain",
+                availability: [
+                    { date: formatDateToYYYYMMDD(new Date()), slots: ["10:00", "11:00", "13:00"] }
+                ],
+                languages: ["Spanish", "English"],
+                profilePic: "https://placehold.co/100x100/ADD8E6/000000?text=MG",
+                about: "Dr. Maria Garcia is an expert ophthalmologist providing comprehensive eye care, from routine check-ups to advanced surgical procedures. She is committed to preserving and enhancing her patients' vision with precision and compassion.",
+                areasOfInterest: ["Cataract Surgery", "Glaucoma", "Retinal Diseases", "Refractive Errors"]
+            },
+            {
+                id: 8,
+                name: "Dr. David Lee",
+                specialty: "Dentist",
+                rating: 4.9,
+                fee: 80,
+                experience: 7,
+                location: "Sydney Dental Care, Sydney, Australia",
+                availability: [
+                    { date: formatDateToYYYYMMDD(new Date()), slots: ["09:00", "10:00", "11:00", "12:00"] }
+                ],
+                languages: ["English"],
+                profilePic: "https://placehold.co/100x100/ADD8E6/000000?text=DL",
+                about: "Dr. David Lee is a highly-rated dentist offering a full spectrum of dental services, from preventative care to cosmetic enhancements. He creates a welcoming environment, ensuring comfortable and effective treatments for all his patients.",
+                areasOfInterest: ["General Dentistry", "Cosmetic Dentistry", "Orthodontics", "Dental Implants"]
+            },
+            {
+                id: 9,
+                name: "Dr. Lena Müller",
+                specialty: "Gynecologist",
+                rating: 4.7,
+                fee: 130,
+                experience: 14,
+                location: "Frauenklinik Berlin, Berlin, Germany",
+                availability: [
+                    { date: formatDateToYYYYMMDD(new Date()), slots: ["13:00", "14:00", "15:00"] }
+                ],
+                languages: ["German", "English"],
+                profilePic: "https://placehold.co/100x100/ADD8E6/000000?text=LM",
+                about: "Dr. Lena Müller is a compassionate gynecologist specializing in women's reproductive health and well-being. She provides comprehensive care, from routine check-ups to advanced treatments, with a focus on patient education and empowerment.",
+                areasOfInterest: ["Prenatal Care", "PCOS", "Menopause", "Family Planning"]
+            },
+            {
+                id: 10,
+                name: "Dr. Jean-Luc Dubois",
+                specialty: "Urologist",
+                rating: 4.5,
+                fee: 160,
+                experience: 11,
+                location: "Hôpital Saint-Louis, Paris, France",
+                availability: [
+                    { date: formatDateToYYYYMMDD(new Date(new Date().setDate(new Date().getDate() + 1))), slots: ["11:00", "12:00", "14:00"] }
+                ],
+                languages: ["French", "English"],
+                profilePic: "https://placehold.co/100x100/ADD8E6/000000?text=JD",
+                about: "Dr. Jean-Luc Dubois is a skilled urologist proficient in treating a wide range of urinary tract and male reproductive system conditions. He employs advanced diagnostic techniques and minimally invasive procedures to ensure effective and comfortable patient care.",
+                areasOfInterest: ["Kidney Stones", "Prostate Health", "Urinary Tract Infections", "Male Infertility"]
+            },
+            {
+                id: 11,
+                name: "Dr. Fatima Zahra",
+                specialty: "Endocrinologist",
+                rating: 4.6,
+                fee: 100,
+                experience: 9,
+                location: "Dubai Health Authority, Dubai, UAE",
+                availability: [
+                    { date: formatDateToYYYYMMDD(new Date()), slots: ["09:00", "10:00", "11:00"] }
+                ],
+                languages: ["Arabic", "English"],
+                profilePic: "https://placehold.co/100x100/ADD8E6/000000?text=FZ",
+                about: "Dr. Fatima Zahra is an experienced endocrinologist specializing in hormonal imbalances and metabolic disorders. She provides personalized treatment plans, focusing on lifestyle modifications and advanced therapies to improve patient health and well-being.",
+                areasOfInterest: ["Diabetes", "Thyroid Disorders", "PCOS", "Obesity"]
+            },
+            {
+                id: 12,
+                name: "Dr. Alex Johnson",
+                specialty: "Psychiatrist",
+                rating: 4.9,
+                fee: 200,
+                experience: 15,
+                location: "Toronto Mental Health Centre, Toronto, Canada",
+                availability: [
+                    { date: formatDateToYYYYMMDD(new Date(new Date().setDate(new Date().getDate() + 1))), slots: ["14:00", "15:00", "16:00"] }
+                ],
+                languages: ["English"],
+                profilePic: "https://placehold.co/100x100/ADD8E6/000000?text=AJ",
+                about: "Dr. Alex Johnson is a highly respected psychiatrist offering compassionate care for a wide range of mental health conditions. He uses an integrative approach, combining psychotherapy with medication management to support his patients' journey towards recovery and well-being.",
+                areasOfInterest: ["Depression", "Anxiety Disorders", "Bipolar Disorder", "PTSD"]
+            },
+            {
+                id: 13,
+                name: "Dr. Isabella Costa",
+                specialty: "Gastroenterologist",
+                rating: 4.7,
+                fee: 140,
+                experience: 13,
+                location: "Hospital Sírio-Libanês, São Paulo, Brazil",
+                availability: [
+                    { date: formatDateToYYYYMMDD(new Date()), slots: ["10:00", "11:00", "12:00"] }
+                ],
+                languages: ["Portuguese", "English"],
+                profilePic: "https://placehold.co/100x100/ADD8E6/000000?text=IC",
+                about: "Dr. Isabella Costa is a leading gastroenterologist specializing in digestive system disorders. She performs advanced endoscopic procedures and provides comprehensive care for conditions like IBS, Crohn's disease, and liver disorders, aiming to improve her patients' gastrointestinal health.",
+                areasOfInterest: ["IBS", "Crohn's Disease", "Endoscopy", "Liver Diseases"]
+            },
+            {
+                id: 14,
+                name: "Dr. Liam O'Connell",
+                specialty: "Pulmonologist",
+                rating: 4.6,
+                fee: 110,
+                experience: 8,
+                location: "Dublin Lung Clinic, Dublin, Ireland",
+                availability: [
+                    { date: formatDateToYYYYMMDD(new Date(new Date().setDate(new Date().getDate() + 1))), slots: ["09:00", "10:00", "11:00"] }
+                ],
+                languages: ["English", "Irish"],
+                profilePic: "https://placehold.co/100x100/ADD8E6/000000?text=LO",
+                about: "Dr. Liam O'Connell is a skilled pulmonologist dedicated to treating respiratory conditions such as asthma, COPD, and lung infections. He provides thorough diagnostic evaluations and personalized treatment plans to help patients breathe easier and improve their lung function.",
+                areasOfInterest: ["Asthma", "COPD", "Lung Cancer Screening", "Sleep Apnea"]
+            },
+            {
+                id: 15,
+                name: "Dr. Anya Petrova",
+                specialty: "Nephrologist",
+                rating: 4.8,
+                fee: 170,
+                experience: 17,
+                location: "Moscow Kidney Centre, Moscow, Russia",
+                availability: [
+                    { date: formatDateToYYYYMMDD(new Date()), slots: ["15:00", "16:00"] }
+                ],
+                languages: ["Russian", "English"],
+                profilePic: "https://placehold.co/100x100/ADD8E6/000000?text=AP",
+                about: "Dr. Anya Petrova is a highly experienced nephrologist specializing in kidney diseases, dialysis, and kidney transplantation. She provides comprehensive care for patients with complex renal conditions, focusing on preserving kidney function and improving long-term health outcomes.",
+                areasOfInterest: ["Chronic Kidney Disease", "Dialysis", "Kidney Transplant", "Hypertension"]
+            },
+            {
+                id: 16,
+                name: "Dr. Samuel Kim",
+                specialty: "Oncologist",
+                rating: 4.7,
+                fee: 250,
+                experience: 20,
+                location: "Seoul Cancer Center, Seoul, South Korea",
+                availability: [
+                    { date: formatDateToYYYYMMDD(new Date()), slots: ["09:00", "10:00", "11:00"] }
+                ],
+                languages: ["Korean", "English"],
+                profilePic: "https://placehold.co/100x100/ADD8E6/000000?text=SK",
+                about: "Dr. Samuel Kim is a leading oncologist with extensive experience in cancer diagnosis and treatment. He specializes in medical oncology and provides personalized care plans, including chemotherapy, targeted therapy, and immunotherapy, guiding patients through their cancer journey.",
+                areasOfInterest: ["Solid Tumors", "Leukemia", "Immunotherapy", "Precision Oncology"]
+            },
+            {
+                id: 17,
+                name: "Dr. Chloe Dubois",
+                specialty: "Dietitian",
+                rating: 4.5,
+                fee: 70,
+                experience: 6,
+                location: "Nutrition Clinic, Montreal, Canada",
+                availability: [
+                    { date: formatDateToYYYYMMDD(new Date(new Date().setDate(new Date().getDate() + 1))), slots: ["10:00", "11:00", "12:00", "13:00"] }
+                ],
+                languages: ["French", "English"],
+                profilePic: "https://placehold.co/100x100/ADD8E6/000000?text=CD",
+                about: "Dr. Chloe Dubois is a dedicated dietitian helping patients achieve their health goals through personalized nutrition plans. She specializes in weight management, diabetes nutrition, and therapeutic diets, empowering individuals to make sustainable healthy food choices.",
+                areasOfInterest: ["Weight Loss", "Diabetes Management", "Sports Nutrition", "Digestive Health"]
+            },
+            {
+                id: 18,
+                name: "Dr. Hiroshi Sato",
+                specialty: "Cardiologist",
+                rating: 4.9,
+                fee: 1900,
+                experience: 23,
+                location: "Osaka Heart Institute, Osaka, Japan",
+                availability: [
+                    { date: formatDateToYYYYMMDD(new Date()), slots: ["10:00", "11:00", "12:00"] }
+                ],
+                languages: ["Japanese", "English"],
+                profilePic: "https://placehold.co/100x100/ADD8E6/000000?text=HS",
+                about: "Dr. Hiroshi Sato is a highly acclaimed cardiologist, a pioneer in advanced cardiac interventions. With over two decades of experience, he is known for his expertise in complex angioplasties and stenting, providing cutting-edge cardiac care.",
+                areasOfInterest: ["Interventional Cardiology", "Electrophysiology", "Heart Valve Disease", "Cardiac Rehabilitation"]
+            },
+            {
+                id: 19,
+                name: "Dr. Aisha Khan",
+                specialty: "Pediatrician",
+                rating: 4.7,
+                fee: 95,
+                experience: 9,
+                location: "Children's Hospital, Lahore, Pakistan",
+                availability: [
+                    { date: formatDateToYYYYMMDD(new Date(new Date().setDate(new Date().getDate() + 1))), slots: ["09:00", "10:00", "11:00"] }
+                ],
+                languages: ["Urdu", "English"],
+                profilePic: "https://placehold.co/100x100/ADD8E6/000000?text=AK",
+                about: "Dr. Aisha Khan is a vibrant and caring pediatrician dedicated to providing comprehensive healthcare for infants, children, and adolescents. She focuses on preventative care, early diagnosis, and management of childhood diseases.",
+                areasOfInterest: ["Infant Care", "Childhood Nutrition", "Infectious Diseases", "Adolescent Mental Health"]
+            },
+            {
+                id: 20,
+                name: "Dr. Ben Carter",
+                specialty: "General Physician",
+                rating: 4.8,
+                fee: 105,
+                experience: 14,
+                location: "Manchester Health Clinic, Manchester, UK",
+                availability: [
+                    { date: formatDateToYYYYMMDD(new Date()), slots: ["16:00", "17:00", "18:00"] }
+                ],
+                languages: ["English"],
+                profilePic: "https://placehold.co/100x100/ADD8E6/000000?text=BC",
+                about: "Dr. Ben Carter is a trusted general physician providing primary healthcare services with a strong emphasis on preventive medicine and chronic disease management. He builds strong patient relationships and offers personalized medical advice for the entire family.",
+                areasOfInterest: ["Preventive Care", "Diabetes Management", "Hypertension", "Respiratory Illnesses"]
+            }
+        ];
+
+        // Simple mapping of diseases/symptoms to specialties
+        const diseaseToSpecialty = {
+            "fever": "General Physician",
+            "headache": "General Physician",
+            "cold": "General Physician",
+            "cough": "General Physician",
+            "chest pain": "Cardiologist",
+            "heart problems": "Cardiologist",
+            "skin rash": "Dermatologist",
+            "acne": "Dermatologist",
+            "bone fracture": "Orthopedic",
+            "joint pain": "Orthopedic",
+            "child fever": "Pediatrician",
+            "child vaccination": "Pediatrician",
+            "neurological issues": "Neurologist",
+            "migraine": "Neurologist",
+            "eye pain": "Ophthalmologist",
+            "vision problems": "Ophthalmologist",
+            "toothache": "Dentist",
+            "cavity": "Dentist",
+            "pregnancy": "Gynecologist",
+            "urinary issues": "Urologist",
+            "diabetes": "Endocrinologist",
+            "anxiety": "Psychiatrist",
+            "stomach pain": "Gastroenterologist",
+            "breathing problems": "Pulmonologist",
+            "kidney disease": "Nephrologist",
+            "cancer": "Oncologist",
+            "nutrition": "Dietitian",
+            "diet": "Dietitian",
+            "eye problem": "Ophthalmologist", // Added
+            "nose problem": "ENT", // Added
+            "throat problem": "ENT", // Added
+            "ear problem": "ENT", // Added for completeness
+            "ear infection": "ENT" // Added for completeness
+        };
+
+        // Define fee ranges
+        const feeRanges = [
+            { value: "0-500", label: "Under ₹500 / $7", min: 0, max: 500 },
+            { value: "500-800", label: "₹500 - ₹800 / $7 - $10", min: 500, max: 800 },
+            { value: "800-1000", label: "₹800 - ₹1000 / $10 - $13", min: 800, max: 1000 },
+            { value: "1000-max", label: "₹1000+ / $13+", min: 1000, max: Infinity }
+        ];
+
+        // Get DOM elements
+        const mainListingView = document.getElementById('main-listing-view');
+        const doctorDetailView = document.getElementById('doctor-detail-view');
+        const backToDoctorsBtn = document.getElementById('back-to-doctors-btn');
+
+        const doctorListDiv = document.getElementById('doctor-list');
+        const searchInput = document.getElementById('search-input');
+        const specialtyFilter = document.getElementById('specialty-filter');
+        const locationFilter = document.getElementById('location-filter');
+        const feeRangeFilter = document.getElementById('fee-range-filter');
+        const sortByFilter = document.getElementById('sort-by-filter');
+        const diseaseInput = document.getElementById('disease-input');
+        const noResultsMessage = document.getElementById('no-results');
+
+        // Detail view elements
+        const detailProfilePic = document.getElementById('detail-profile-pic');
+        const detailName = document.getElementById('detail-name');
+        const detailSpecialty = document.getElementById('detail-specialty');
+        const detailRating = document.getElementById('detail-rating');
+        const detailExperience = document.getElementById('detail-experience');
+        const detailFee = document.getElementById('detail-fee');
+        const detailLocation = document.getElementById('detail-location');
+        const detailAbout = document.getElementById('detail-about');
+        const aboutDoctorName = document.getElementById('about-doctor-name');
+        const detailAreasOfInterest = document.getElementById('detail-areas-of-interest');
+        const detailLanguages = document.getElementById('detail-languages');
+        const viewSlotsBtn = document.getElementById('view-slots-btn');
+        const availabilityCalendar = document.getElementById('availability-calendar');
+        const detailBookAppointmentBtn = document.getElementById('detail-book-appointment-btn');
+        const detailContactBtn = document.getElementById('detail-contact-btn');
+        const confirmBookingBtn = document.getElementById('confirm-booking-btn');
+        const bookingStatusMessage = document.getElementById('booking-status-message');
+
+        let selectedSlot = null; // To store the selected time slot
+        let currentDoctorId = null; // To store the ID of the doctor whose modal is open
+
+        // Populate filters with unique values from doctor data
+        function populateFilters() {
+            const specialties = [...new Set(doctors.map(d => d.specialty))].sort();
+            const locations = [...new Set(doctors.map(d => d.location.split(',').pop().trim()))].sort();
+
+            specialties.forEach(spec => {
+                const option = document.createElement('option');
+                option.value = spec;
+                option.textContent = spec;
+                specialtyFilter.appendChild(option);
+            });
+
+            locations.forEach(loc => {
+                const option = document.createElement('option');
+                option.value = loc;
+                option.textContent = loc;
+                locationFilter.appendChild(option);
+            });
+
+            feeRanges.forEach(range => {
+                const option = document.createElement('option');
+                option.value = range.value;
+                option.textContent = range.label;
+                feeRangeFilter.appendChild(option);
+            });
+        }
+
+        // Function to render doctor cards
+        function renderDoctors(filteredAndSortedDoctors) {
+            doctorListDiv.innerHTML = '';
+            if (filteredAndSortedDoctors.length === 0) {
+                noResultsMessage.classList.remove('hidden');
+                return;
+            } else {
+                noResultsMessage.classList.add('hidden');
+            }
+
+            filteredAndSortedDoctors.forEach(doctor => {
+                const doctorCard = `
+                    <div class="doctor-card bg-white rounded-xl shadow-md p-6 flex flex-col transition-all duration-300 hover:shadow-xl" data-doctor-id="${doctor.id}">
+                        <div class="flex items-center mb-4">
+                            <img src="${doctor.profilePic}" alt="${doctor.name}" class="w-20 h-20 rounded-full mr-4 border-2 border-blue-200 object-cover" onerror="this.onerror=null;this.src='https://placehold.co/100x100/ADD8E6/000000?text=${doctor.name.split(' ').map(n => n[0]).join('')}'">
+                            <div>
+                                <h2 class="text-xl font-bold text-gray-800">${doctor.name}</h2>
+                                <p class="text-blue-600 font-semibold">${doctor.specialty}</p>
+                            </div>
+                            <div class="ml-auto text-right">
+                                <span class="text-yellow-500 text-lg"><i class="fas fa-star"></i> ${doctor.rating}</span>
+                                <p class="text-green-600 font-bold text-lg">₹${doctor.fee}</p>
+                            </div>
+                        </div>
+                        <p class="text-gray-600 mb-2"><i class="fas fa-briefcase text-gray-400 mr-2"></i>${doctor.experience} years experience</p>
+                        <p class="text-gray-600 mb-4"><i class="fas fa-map-marker-alt text-gray-400 mr-2"></i>${doctor.location}</p>
+                        <p class="text-gray-600 mb-4 text-sm font-medium"><i class="fas fa-calendar-alt text-gray-400 mr-2"></i>${doctor.availability && doctor.availability.length > 0 ? getFormattedDate(doctor.availability[0].date) + (doctor.availability[0].slots.length > 0 ? ' (Slots available)' : ' (No slots)') : 'No availability listed'}</p>
+                        <div class="flex flex-wrap gap-2 mb-4">
+                            <span class="text-gray-600 mr-2">Languages:</span>
+                            ${doctor.languages.map(lang => `<span class="bg-gray-200 text-gray-700 text-xs px-3 py-1 rounded-full">${lang}</span>`).join('')}
+                        </div>
+                        <div class="flex gap-3 mt-auto">
+                            <button class="book-appointment-btn flex-1 px-4 py-2 bg-blue-600 text-white rounded-full hover:bg-blue-700 transition duration-300 shadow-md flex items-center justify-center" data-doctor-name="${doctor.name}" data-doctor-id="${doctor.id}">
+                                <i class="fas fa-calendar-check mr-2"></i> Book Appointment
+                            </button>
+                            <button class="contact-btn flex-1 px-4 py-2 bg-gray-200 text-gray-800 rounded-full hover:bg-gray-300 transition duration-300 shadow-md flex items-center justify-center" data-doctor-name="${doctor.name}">
+                                <i class="fas fa-phone mr-2"></i> Contact
+                            </button>
+                        </div>
+                    </div>
+                `;
+                doctorListDiv.insertAdjacentHTML('beforeend', doctorCard);
+            });
+
+            document.querySelectorAll('.book-appointment-btn').forEach(button => {
+                button.onclick = (event) => {
+                    event.stopPropagation();
+                    openAppointmentModal(event.target.dataset.doctorName, parseInt(event.target.dataset.doctorId));
+                };
+            });
+            document.querySelectorAll('.contact-btn').forEach(button => {
+                button.onclick = (event) => {
+                    event.stopPropagation();
+                    openContactModal(event.target.dataset.doctorName);
+                };
+            });
+            document.querySelectorAll('.doctor-card').forEach(card => {
+                card.onclick = (event) => {
+                    showDoctorDetails(parseInt(event.currentTarget.dataset.doctorId));
+                };
+            });
+        }
+
+        function applyFiltersAndSort() {
+            const searchTerm = searchInput.value.toLowerCase();
+            const selectedSpecialty = specialtyFilter.value;
+            const selectedLocation = locationFilter.value;
+            const selectedFeeRange = feeRangeFilter.value;
+            const selectedSortBy = sortByFilter.value;
+
+            let filtered = doctors.filter(doctor => {
+                const matchesSearch = doctor.name.toLowerCase().includes(searchTerm) ||
+                                      doctor.specialty.toLowerCase().includes(searchTerm) ||
+                                      doctor.location.toLowerCase().includes(searchTerm);
+
+                const matchesSpecialty = selectedSpecialty === "" || doctor.specialty === selectedSpecialty;
+                const matchesLocation = selectedLocation === "" || doctor.location.toLowerCase().includes(selectedLocation.toLowerCase());
+
+                let matchesFeeRange = true;
+                if (selectedFeeRange !== "") {
+                    const range = feeRanges.find(r => r.value === selectedFeeRange);
+                    if (range) {
+                        matchesFeeRange = doctor.fee >= range.min && doctor.fee <= range.max;
+                    }
+                }
+
+                return matchesSearch && matchesSpecialty && matchesLocation && matchesFeeRange;
+            });
+
+            if (selectedSortBy !== "") {
+                filtered.sort((a, b) => {
+                    if (selectedSortBy === "rating") {
+                        return b.rating - a.rating;
+                    } else if (selectedSortBy === "experience") {
+                        return b.experience - a.experience;
+                    } else if (selectedSortBy === "fee-asc") {
+                        return a.fee - b.fee;
+                    } else if (selectedSortBy === "fee-desc") {
+                        return b.fee - a.fee;
+                    }
+                    return 0;
+                });
+            }
+
+            renderDoctors(filtered);
+        }
+
+        diseaseInput.addEventListener('input', (event) => {
+            const diseaseQuery = event.target.value.toLowerCase().trim();
+            let identifiedSpecialty = '';
+
+            for (const disease in diseaseToSpecialty) {
+                if (diseaseQuery.includes(disease)) {
+                    identifiedSpecialty = diseaseToSpecialty[disease];
+                    break;
+                }
+            }
+
+            if (identifiedSpecialty) {
+                specialtyFilter.value = identifiedSpecialty;
+            } else {
+                specialtyFilter.value = "";
+            }
+            applyFiltersAndSort();
+        });
+
+        searchInput.addEventListener('input', applyFiltersAndSort);
+        specialtyFilter.addEventListener('change', applyFiltersAndSort);
+        locationFilter.addEventListener('change', applyFiltersAndSort);
+        feeRangeFilter.addEventListener('change', applyFiltersAndSort);
+        sortByFilter.addEventListener('change', applyFiltersAndSort);
+
+        function showDoctorDetails(doctorId) {
+            const doctor = doctors.find(d => d.id === doctorId);
+            if (!doctor) return;
+
+            detailProfilePic.src = doctor.profilePic;
+            detailProfilePic.onerror = () => {
+                detailProfilePic.src = `https://placehold.co/100x100/ADD8E6/000000?text=${doctor.name.split(' ').map(n => n[0]).join('')}`;
+            };
+            detailName.textContent = doctor.name;
+            detailSpecialty.textContent = doctor.specialty;
+            detailRating.textContent = doctor.rating;
+            detailExperience.textContent = `${doctor.experience} years experience`;
+            detailFee.textContent = `₹${doctor.fee}`;
+            detailLocation.textContent = doctor.location;
+            aboutDoctorName.textContent = doctor.name;
+            detailAbout.textContent = doctor.about || "No detailed information available for this doctor.";
+
+            detailAreasOfInterest.innerHTML = '';
+            if (doctor.areasOfInterest && doctor.areasOfInterest.length > 0) {
+                doctor.areasOfInterest.forEach(area => {
+                    const span = document.createElement('span');
+                    span.className = 'bg-blue-100 text-blue-800 text-sm px-3 py-1 rounded-full whitespace-nowrap';
+                    span.textContent = area;
+                    detailAreasOfInterest.appendChild(span);
+                });
+            } else {
+                detailAreasOfInterest.textContent = "N/A";
+            }
+
+            detailLanguages.innerHTML = '';
+            doctor.languages.forEach(lang => {
+                const span = document.createElement('span');
+                span.className = 'bg-gray-200 text-gray-700 text-sm px-3 py-1 rounded-full';
+                span.textContent = lang;
+                detailLanguages.appendChild(span);
+            });
+
+            viewSlotsBtn.onclick = () => toggleAvailabilityCalendar(doctor);
+            availabilityCalendar.classList.add('hidden');
+            availabilityCalendar.innerHTML = '';
+            selectedSlot = null;
+
+            detailBookAppointmentBtn.onclick = () => openAppointmentModal(doctor.name, doctor.id, selectedSlot);
+            detailContactBtn.onclick = () => openContactModal(doctor.name);
+
+            mainListingView.classList.add('hidden');
+            doctorDetailView.classList.remove('hidden');
+        }
+
+        function toggleAvailabilityCalendar(doctor) {
+            availabilityCalendar.classList.toggle('hidden');
+            if (!availabilityCalendar.classList.contains('hidden')) {
+                renderAvailabilityCalendar(doctor);
+            }
+        }
+
+        function renderAvailabilityCalendar(doctor) {
+            availabilityCalendar.innerHTML = '';
+            if (!doctor.availability || doctor.availability.length === 0) {
+                availabilityCalendar.innerHTML = '<p class="text-gray-600">No specific availability listed.</p>';
+                return;
+            }
+
+            doctor.availability.forEach(dayInfo => {
+                const date = new Date(dayInfo.date);
+                const dayDiv = document.createElement('div');
+                dayDiv.className = 'mb-4';
+                dayDiv.innerHTML = `<h4 class="font-semibold text-lg text-purple-800 mb-2">${getFormattedDate(dayInfo.date)}</h4>`;
+
+                const slotsDiv = document.createElement('div');
+                slotsDiv.className = 'flex flex-wrap gap-2';
+
+                if (dayInfo.slots && dayInfo.slots.length > 0) {
+                    dayInfo.slots.sort((a, b) => {
+                        const [ha, ma] = a.split(':').map(Number);
+                        const [hb, mb] = b.split(':').map(Number);
+                        if (ha !== hb) return ha - hb;
+                        return ma - mb;
+                    }).forEach(slot => {
+                        const slotSpan = document.createElement('span');
+                        slotSpan.className = 'time-slot bg-purple-200 text-purple-800 px-4 py-2 rounded-full cursor-pointer hover:bg-purple-300 transition duration-200';
+                        slotSpan.textContent = slot;
+                        slotSpan.dataset.date = dayInfo.date;
+                        slotSpan.dataset.time = slot;
+
+                        slotSpan.onclick = (e) => {
+                            const prevSelected = availabilityCalendar.querySelector('.time-slot.selected');
+                            if (prevSelected) {
+                                prevSelected.classList.remove('selected', 'bg-blue-500', 'text-white');
+                                prevSelected.classList.add('bg-purple-200', 'text-purple-800');
+                            }
+                            e.target.classList.add('selected', 'bg-blue-500', 'text-white');
+                            e.target.classList.remove('bg-purple-200', 'text-purple-800');
+                            selectedSlot = { date: e.target.dataset.date, time: e.target.dataset.time };
+                        };
+                        slotsDiv.appendChild(slotSpan);
+                    });
+                } else {
+                    slotsDiv.innerHTML = '<p class="text-gray-600 text-sm">No slots available for this day.</p>';
+                }
+                dayDiv.appendChild(slotsDiv);
+                availabilityCalendar.appendChild(dayDiv);
+            });
+        }
+
+        function hideDoctorDetails() {
+            doctorDetailView.classList.add('hidden');
+            mainListingView.classList.remove('hidden');
+            applyFiltersAndSort();
+        }
+
+        backToDoctorsBtn.addEventListener('click', hideDoctorDetails);
+
+        function openAppointmentModal(doctorName, doctorId, preselectedSlot = null) {
+            document.getElementById('modal-doctor-name').textContent = doctorName;
+            confirmBookingBtn.dataset.doctorId = doctorId; // Store doctor ID for validation
+            document.getElementById('appointment-modal').classList.remove('hidden');
+
+            document.getElementById('booking-form').classList.remove('hidden');
+            bookingStatusMessage.classList.add('hidden'); // Hide status message initially
+
+            document.getElementById('appointment-date').value = preselectedSlot ? preselectedSlot.date : '';
+            document.getElementById('appointment-time').value = preselectedSlot ? preselectedSlot.time : '';
+            document.getElementById('patient-name').value = '';
+        }
+
+        function openContactModal(doctorName) {
+            document.getElementById('modal-contact-doctor-name').textContent = doctorName;
+            document.getElementById('contact-modal').classList.remove('hidden');
+        }
+
+        function closeModal(modalId) {
+            document.getElementById(modalId).classList.add('hidden');
+        }
+
+        window.onclick = function(event) {
+            const appointmentModal = document.getElementById('appointment-modal');
+            const contactModal = document.getElementById('contact-modal');
+            if (event.target == appointmentModal) {
+                appointmentModal.classList.add('hidden');
+            }
+            if (event.target == contactModal) {
+                contactModal.classList.add('hidden');
+            }
+        }
+
+        // Handle appointment booking confirmation
+        confirmBookingBtn.addEventListener('click', () => {
+            const doctorId = parseInt(confirmBookingBtn.dataset.doctorId);
+            const doctor = doctors.find(d => d.id === doctorId);
+            const doctorName = document.getElementById('modal-doctor-name').textContent;
+            const appointmentDate = document.getElementById('appointment-date').value;
+            const appointmentTime = document.getElementById('appointment-time').value;
+            const patientName = document.getElementById('patient-name').value;
+
+            bookingStatusMessage.classList.remove('hidden'); // Show status message container
+
+            if (!appointmentDate || !appointmentTime || !patientName) {
+                bookingStatusMessage.innerHTML = `
+                    <i class="fas fa-exclamation-triangle text-red-500 text-5xl mb-4"></i>
+                    <p class="text-xl font-semibold text-red-800 mb-2">Booking Failed!</p>
+                    <p class="text-red-600">Please fill in all appointment details.</p>
+                `;
+                return;
+            }
+
+            // Validate booking time against doctor's availability
+            let isTimeSlotAvailable = false;
+            if (doctor && doctor.availability) {
+                const availableDay = doctor.availability.find(day => day.date === appointmentDate);
+                if (availableDay && availableDay.slots.includes(appointmentTime)) {
+                    isTimeSlotAvailable = true;
+                }
+            }
+
+            if (isTimeSlotAvailable) {
+                document.getElementById('booking-form').classList.add('hidden');
+                bookingStatusMessage.innerHTML = `
+                    <i class="fas fa-check-circle text-green-500 text-5xl mb-4"></i>
+                    <p class="text-xl font-semibold text-gray-800 mb-2">Appointment Confirmed!</p>
+                    <p class="text-gray-600">Thank you for booking with <span class="font-semibold">${doctorName}</span>.</p>
+                    <p class="text-gray-600">We look forward to seeing you on <span class="font-semibold">${new Date(appointmentDate).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</span> at <span class="font-semibold">${appointmentTime}</span>.</p>
+                `;
+            } else {
+                bookingStatusMessage.innerHTML = `
+                    <i class="fas fa-times-circle text-red-500 text-5xl mb-4"></i>
+                    <p class="text-xl font-semibold text-red-800 mb-2">Booking Not Available!</p>
+                    <p class="text-red-600">The selected date or time slot is not available for ${doctorName}. Please choose an available slot.</p>
+                `;
+            }
+        });
+
+        document.addEventListener('DOMContentLoaded', () => {
+            populateFilters();
+            applyFiltersAndSort();
+        });
+    </script>
+</body>
+</html>

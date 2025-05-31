@@ -40,5 +40,9 @@ app.include_router(chat_router.router, prefix="/api/v1", tags=["Chat & Medical A
 async def serve_home(request: Request):
     return templates.TemplateResponse("index.html", {"request": request})
 
+@app.get("/doctor-connect", include_in_schema=False) # Add this new route
+async def serve_doctor_connect_page(request: Request):
+    return templates.TemplateResponse("doctorconnect.html", {"request": request})
+
 # To run from my_ai_medical_assistant/ directory:
 # uvicorn medical-assistant.main:app --reload --port 8000
