@@ -118,5 +118,5 @@ You may freely use, modify, and share this project for personal or non-commercia
 
 Full license text is available in the [LICENSE](./LICENSE.txt) file.
 
-This project also makes use of third-party services, including the Perplexity SONAR API. Use of these services is subject to their own terms of service as detailed in the [Third-Party Notices](./THIRD_PARTY_NOTICE.md).
+This project also makes use of third-party services, including the Perplexity SONAR API. Use of these services is subject to their own terms of service as detailed in the [Third-Party Notices](.github/THIRD_PARTY_NOTICE.md).
 
