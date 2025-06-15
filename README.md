@@ -109,3 +109,14 @@ The project is organized into a main FastAPI application (`medical-assistant`) w
 *   Enhance error handling and user feedback mechanisms.
 *   Develop user authentication for personalization and secure data.
 *   Expand data visualization capabilities.
+
+## License
+
+This project is licensed under the Creative Commons Attribution-NonCommercial 4.0 International License.
+
+You may freely use, modify, and share this project for personal or non-commercial purposes, provided that proper attribution is given to the author. Commercial use requires prior written consent.
+
+Full license text is available in the [LICENSE](./LICENSE.txt) file.
+
+This project also makes use of third-party services, including the Perplexity SONAR API. Use of these services is subject to their own terms of service as detailed in the [Third-Party Notices](./THIRD_PARTY_NOTICE.md).
+

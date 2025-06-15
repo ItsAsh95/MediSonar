@@ -69,4 +69,3 @@ Thumbs.db
 
 # Uploads directory (if it contains sensitive test data during dev)
 # medical-assistant/static/uploads/*
-# !medical-assistant/static/uploads/.gitkeep # If you want to keep the folder
