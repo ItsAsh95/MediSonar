@@ -56,7 +56,7 @@ All third-party licenses must be disclosed in `THIRD_PARTY_NOTICE.md`.
 
 ## 🐛 Bug Reports & Feature Requests
 
-Please use the GitHub [Issues](ItsAsh95/MediSonar/issues) section for:
+Please use the GitHub [Issues](https://github.com/ItsAsh95/MediSonar/issues) section for:
 
 - Reporting reproducible bugs.
 - Suggesting new features or improvements.
