@@ -25,23 +25,33 @@
 
 ## Project Structure
 
-The project is organized into a main FastAPI application (`medical-assistant`) which serves the primary chat interface and orchestrates access to other specialized applications/modules:
+The project is architected as a **unified, multi-component FastAPI application**. The central `medical-assistant` application serves as the primary orchestrator, managing the core chat interface while seamlessly integrating and serving several specialized sub-applications. All components are designed to run under a single server process for a cohesive user experience.
 
-*   `MediSonar/`
-    *   `.env`: **(CRITICAL)** Stores API keys and model configurations. Must be created manually.
-    *   `medical-assistant/`: Core files for the main FastAPI application and integrated sub-app routers.
-        *   `main.py`: Main FastAPI app instance, mounts static files and includes all routers.
-        *   `config.py`: Loads `.env` and provides settings.
-        *   `api/`: Router and models for the main chat assistant's Q&A/Symptom modes.
-        *   `static/`: Assets for the main Q&A UI, and the build output for the Symptom Analyzer React SPA (`symptom_analyzer_spa/`).
-        *   `templates/`: Jinja2 HTML templates for the main Q&A UI (`index.html`), Doctor Connect (`doctorconnect.html`), and About page (`about.html`).
-        *   `utils/`: AI handler and memory management for the main chat assistant.
-    *   `report_analyzer_app/`: Contains `main_router.py` (with all its Python logic) and `static/` (frontend HTML, CSS, JS) for the Report Analyzer.
-    *   `survey_research_app/`: Contains `main_router.py`, `schemas.py`, `services.py`, and `static/` for the Survey & Research tool.
-    *   `advisories_app/`: Contains `main_router.py` (with all its Python logic) and `static/` for the Advisories tool.
-        
-        
-    *   *(Original sub-app development folders like `report_analyzer_app/`, `survey_research_app/`, `advisiories_app/`, `Symptom/` are separate from this integrated deployment structure).*
+*   `MediSonar/` **(Project Root)**
+    *   `.env`: **(CRITICAL - Must be created manually)** Stores all API keys (`PERPLEXITY_API_KEY`) and other environment-specific configurations for the entire suite of applications.
+    *   `.github/`: Contains community health files for the repository like pull request templates and codes of conduct.
+    *   `LICENSE.txt` & `README.md`: Project license and this informational document.
+    *   `medical-assistant/`: The core FastAPI application that acts as the central orchestrator and serves the main Q&A chat UI.
+        *   `main.py`: The main FastAPI app instance that mounts all static directories and includes all API routers from itself and the sub-applications. **This is the single entry point to run the entire project.**
+        *   `config.py`: Loads the root `.env` file and provides a shared `settings` object for all parts of the application.
+        *   `requirements.txt`: A consolidated list of all Python dependencies for the entire project.
+        *   `api/`: Contains the `chat_router.py` and Pydantic `models.py` for the main chat assistant's functionalities (Q&A).
+        *   `utils/`: Contains core utilities for the main chat assistant, including `ai_handler.py` (for Perplexity API interactions) and `medical_memory.py` (for persistent history management).
+        *   `data/`: Stores persistent JSON files for the main chat assistant's conversation history and medical summary.
+        *   `templates/`: Jinja2 HTML templates for the main wrapper UI (`index.html`) and the "Doctor Connect" page.
+        *   `static/`: Contains static assets (CSS, JS, images) for the main wrapper UI and, importantly, the pre-built static output of the React Symptom Analyzer SPA inside `symptom_analyzer_spa/`.
+    *   `Symptom/`: **(Source Code - Not Deployed Directly)** The source code for the standalone React/Vite/Tailwind-based Symptom Analyzer SPA. The `npm run build` command generates the deployable static files inside `medical-assistant/static/symptom_analyzer_spa/`.
+    *   `report_analyzer_app/`: The complete "Medical Report Analyzer" sub-application module.
+        *   `main_router.py`: Contains the FastAPI `APIRouter` with all API endpoints and HTML-serving routes for this specific app.
+        *   Contains its own `static/` directory for its unique HTML, CSS, and JS frontend.
+        *   Contains its own `uploads_report_app/` and `results_report_app/` for file management, keeping it self-contained within the main project.
+    *   `survey_research_app/`: The complete "Survey & Research" sub-application module.
+        *   `main_router.py`: The `APIRouter` for its API and frontend-serving logic.
+        *   `schemas.py` & `services.py`: Contains its specific Pydantic models and business logic for generating in-depth health reports.
+        *   `static/`: Contains the HTML, CSS, and JS frontend for this tool.
+    *   `advisories_app/`: The complete "Advisories in Effect" sub-application module.
+        *   `main_router.py`: The `APIRouter` for its API and frontend-serving logic.
+        *   `static/`: Contains the simple HTML, CSS, and JS frontend for fetching and displaying advisories.
 
 ## Setup and Running Locally
 
