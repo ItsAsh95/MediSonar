@@ -27,26 +27,28 @@
 
 The project is organized into a main FastAPI application (`medical-assistant`) which serves the primary chat interface and orchestrates access to other specialized applications/modules:
 
-*   `my_ai_medical_assistant/`
+*   `MediSonar/`
     *   `.env`: **(CRITICAL)** Stores API keys and model configurations. Must be created manually.
     *   `medical-assistant/`: Core files for the main FastAPI application and integrated sub-app routers.
         *   `main.py`: Main FastAPI app instance, mounts static files and includes all routers.
         *   `config.py`: Loads `.env` and provides settings.
         *   `api/`: Router and models for the main chat assistant's Q&A/Symptom modes.
-        *   `utils/`: AI handler and memory management for the main chat assistant.
-        *   `report_analyzer_app/`: Contains `main_router.py` (with all its Python logic) and `static/` (frontend HTML, CSS, JS) for the Report Analyzer.
-        *   `survey_research_app/`: Contains `main_router.py`, `schemas.py`, `services.py`, and `static/` for the Survey & Research tool.
-        *   `advisories_app/`: Contains `main_router.py` (with all its Python logic) and `static/` for the Advisories tool.
         *   `static/`: Assets for the main Q&A UI, and the build output for the Symptom Analyzer React SPA (`symptom_analyzer_spa/`).
         *   `templates/`: Jinja2 HTML templates for the main Q&A UI (`index.html`), Doctor Connect (`doctorconnect.html`), and About page (`about.html`).
-    *   *(Original sub-app development folders like `REPORT/`, `PERPLEXITY_DEEP_SEARCH/`, `ADVISORY/`, `Symptom/` are separate from this integrated deployment structure).*
+        *   `utils/`: AI handler and memory management for the main chat assistant.
+    *   `report_analyzer_app/`: Contains `main_router.py` (with all its Python logic) and `static/` (frontend HTML, CSS, JS) for the Report Analyzer.
+    *   `survey_research_app/`: Contains `main_router.py`, `schemas.py`, `services.py`, and `static/` for the Survey & Research tool.
+    *   `advisories_app/`: Contains `main_router.py` (with all its Python logic) and `static/` for the Advisories tool.
+        
+        
+    *   *(Original sub-app development folders like `report_analyzer_app/`, `survey_research_app/`, `advisiories_app/`, `Symptom/` are separate from this integrated deployment structure).*
 
 ## Setup and Running Locally
 
 1.  **Clone the Repository (if applicable):**
     ```bash
-    git clone <your-repo-url>
-    cd my_ai_medical_assistant
+    git clone https://github.com/ItsAsh95/MediSonar.git
+    cd MediSonar
     ```
 
 2.  **Create and Activate a Python Virtual Environment:**
@@ -64,7 +66,7 @@ The project is organized into a main FastAPI application (`medical-assistant`) w
     ```
 
 4.  **Create and Configure `.env` File:**
-    *   In the project root directory (`my_ai_medical_assistant/`), create a file named `.env`.
+    *   In the project root directory (`MediSonar/`), create a file named `.env`.
     *   Add your API keys and any model name overrides:
         ```env
         PERPLEXITY_API_KEY=your_actual_perplexity_api_key_here
@@ -85,10 +87,10 @@ The project is organized into a main FastAPI application (`medical-assistant`) w
     *   Create a `.env` or `.env.local` file inside `Symptom/` with:
         `VITE_API_URL=http://localhost:8000/api/v1`
     *   Build the SPA: `npm run build` (or `yarn build`).
-    *   Copy the entire contents of the generated `Symptom/dist/` folder into `my_ai_medical_assistant/medical-assistant/static/symptom_analyzer_spa/`.
+    *   Copy the entire contents of the generated `Symptom/dist/` folder into `MediSonar/medical-assistant/static/symptom_analyzer_spa/`.
 
 6.  **Run the FastAPI Application:**
-    *   Ensure you are in the project root directory (`my_ai_medical_assistant/`).
+    *   Ensure you are in the project root directory (`MediSonar/`).
     *   Execute:
         ```bash
         uvicorn medical-assistant.main:app --reload --port 8000
