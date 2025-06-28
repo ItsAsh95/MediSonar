@@ -7,4 +7,4 @@ jinja2
 python-multipart
 openai
 Pillow
-pyppdf2==3.0.1
+pypdf2
