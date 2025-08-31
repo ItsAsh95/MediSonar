@@ -1,7 +1,0 @@
-checking on how to submit a pull request thru vscode source control
-
-checking out pull request from the same created branch
-
-checking pull request on chiranjan-on-git-patch-1
-
-okay, all done and sorted and idk the method to delete pull request😋
