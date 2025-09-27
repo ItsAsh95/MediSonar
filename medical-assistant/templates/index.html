@@ -8,6 +8,9 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <link rel="stylesheet" href="{{ url_for('static', path='css/theme.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', path='css/style.css') }}">
+
+    <!-- Added: disease-outbreak specific CSS -->
+    <link rel="stylesheet" href="/disease-outbreak-static/style.css">
 </head>
 <body>
     <nav class="navbar app-navbar">
@@ -55,6 +58,12 @@
             <a href="/advisories/" class="nav-btn" title="View Health Advisories">
                 <i class="fas fa-bullhorn"></i> <span class="nav-btn-text">Advisories in Effect</span>
             </a>
+
+            <!-- New outbreak predictor button -->
+            <a href="/disease-outbreak/" class="nav-btn" title="Predict Regional Disease Outbreaks">
+                <i class="fas fa-chart-line"></i> <span class="nav-btn-text">Outbreak Predictor</span>
+            </a>
+
             <a href="/about" class="nav-btn" title="About MediSonar">
                 <i class="fas fa-info-circle"></i> <span class="nav-btn-text">About MediSonar</span>
             </a>
@@ -131,5 +140,8 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="{{ url_for('static', path='js/main_ui.js') }}"></script>
     <script src="{{ url_for('static', path='js/chat_logic.js') }}"></script>
+
+    <!-- Added: disease-outbreak specific JS -->
+    <script src="/disease-outbreak-static/script.js"></script>
 </body>
 </html>

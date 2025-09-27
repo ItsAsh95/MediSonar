@@ -3,6 +3,7 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from fastapi.responses import FileResponse, HTMLResponse
 from fastapi.middleware.cors import CORSMiddleware
+import disease_outbreak_app.main_router as outbreak_router
 import os
 
 # --- CORRECTED IMPORTS FOR SUB-APPLICATION ROUTERS ---
@@ -62,17 +63,32 @@ if os.path.exists(survey_app_static_on_disk) and os.path.isdir(survey_app_static
 else:
     print(f"WARNING: Survey & Research App static directory not found: {survey_app_static_on_disk}")
 
+disease_app_static_on_disk = os.path.join(project_root_dir, "disease_outbreak_app", "static")
+if os.path.exists(disease_app_static_on_disk) and os.path.isdir(disease_app_static_on_disk):
+    app.mount("/disease-outbreak-static", StaticFiles(directory=disease_app_static_on_disk), name="static_disease_app")
+else:
+    print(f"WARNING: Disease Outbreak App static directory not found: {disease_app_static_on_disk}")
+
+
 advisories_app_static_on_disk = os.path.join(project_root_dir, "advisories_app", "static")
 if os.path.exists(advisories_app_static_on_disk) and os.path.isdir(advisories_app_static_on_disk):
     app.mount("/advisories-static", StaticFiles(directory=advisories_app_static_on_disk), name="static_advisories_app")
 else:
     print(f"WARNING: Advisories App static directory not found: {advisories_app_static_on_disk}")
 
+@app.on_event("startup")
+async def startup_event():
+    print("MAIN_APP: Running startup tasks...")
+    # Trigger the forecast generation for the disease outbreak app
+    outbreak_router.generate_and_cache_forecast()
+    print("MAIN_APP: Startup tasks complete.")
+
 # --- Include API Routers ---
 app.include_router(main_chat_api_router.router, prefix="/api/v1") # This router is inside medical_assistant package
 app.include_router(report_analyzer_router.router)      # Imported as top-level
 app.include_router(survey_research_router.router)   # Imported as top-level
 app.include_router(advisories_router.router)        # Imported as top-level
+app.include_router(outbreak_router.router)
 
 # --- HTML Page Serving for Main Wrapper App ---
 @app.get("/", response_class=HTMLResponse, include_in_schema=False)
