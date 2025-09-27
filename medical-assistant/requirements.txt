@@ -8,3 +8,6 @@ python-multipart
 openai
 Pillow
 pypdf2
+pandas
+scikit-learn
+xgboost
