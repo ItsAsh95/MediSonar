@@ -4,6 +4,7 @@ from fastapi.templating import Jinja2Templates
 from fastapi.responses import FileResponse, HTMLResponse
 from fastapi.middleware.cors import CORSMiddleware
 import disease_outbreak_app.main_router as outbreak_router
+import autism_screening_app.main_router as autism_screening_router
 import os
 
 # --- CORRECTED IMPORTS FOR SUB-APPLICATION ROUTERS ---
@@ -76,6 +77,12 @@ if os.path.exists(advisories_app_static_on_disk) and os.path.isdir(advisories_ap
 else:
     print(f"WARNING: Advisories App static directory not found: {advisories_app_static_on_disk}")
 
+autism_screening_static_on_disk = os.path.join(project_root_dir, "autism_screening_app", "static")
+if os.path.exists(autism_screening_static_on_disk) and os.path.isdir(autism_screening_static_on_disk):
+    app.mount("/autism-screening-static", StaticFiles(directory=autism_screening_static_on_disk), name="static_autism_screening_app")
+else:
+    print(f"WARNING: Autism Screening App static directory not found: {autism_screening_static_on_disk}")
+
 @app.on_event("startup")
 async def startup_event():
     print("MAIN_APP: Running startup tasks...")
@@ -89,6 +96,7 @@ app.include_router(report_analyzer_router.router)      # Imported as top-level
 app.include_router(survey_research_router.router)   # Imported as top-level
 app.include_router(advisories_router.router)        # Imported as top-level
 app.include_router(outbreak_router.router)
+app.include_router(autism_screening_router.router)   # Imported as top-level
 
 # --- HTML Page Serving for Main Wrapper App ---
 @app.get("/", response_class=HTMLResponse, include_in_schema=False)
@@ -120,6 +128,13 @@ async def serve_advisories_frontend():
     file_path = os.path.join(advisories_app_static_on_disk, "index.html")
     if os.path.exists(file_path): return FileResponse(file_path)
     raise HTTPException(status_code=404, detail="Advisories App UI not found.")
+
+@app.get("/autism-screening", response_class=FileResponse, include_in_schema=False)
+@app.get("/autism-screening/", response_class=FileResponse, include_in_schema=False)
+async def serve_autism_screening_frontend():
+    file_path = os.path.join(autism_screening_static_on_disk, "index.html")
+    if os.path.exists(file_path): return FileResponse(file_path)
+    raise HTTPException(status_code=404, detail="Autism Screening App UI not found.")
 
 # --- Catch-all routes for the Symptom Analyzer React SPA ---
 @app.get("/symptom-analyzer/{rest_of_path:path}")

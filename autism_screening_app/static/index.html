@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Autism Behavioral Screening - MediSonar</title>
+    <meta name="description" content="Behavioral screening tool for autism indicators using webcam-based facial analysis, eye tracking, and interactive stimulus tests.">
+    <link rel="stylesheet" href="/autism-screening-static/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+
+    <!-- ===== SITE HEADER ===== -->
+    <header class="site-header">
+        <div class="header-content">
+            <a href="/" style="text-decoration:none; color: inherit;"><h1 class="site-title">Home</h1></a>
+            <div>
+                <button id="theme-toggle-btn" class="theme-toggle" title="Toggle Theme" aria-label="Toggle color theme">
+                    <i class="fas fa-moon"></i>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- ===== MAIN CONTENT ===== -->
+    <main class="container">
+        <!-- Page Title -->
+        <div class="page-header">
+            <h1><i class="fas fa-brain"></i> Autism Behavioral Screening</h1>
+            <p class="subtitle">Webcam-based behavioral analysis for screening indicators</p>
+        </div>
+
+        <!-- ETHICAL DISCLAIMER BANNER -->
+        <div class="disclaimer-banner" id="disclaimerBanner">
+            <i class="fas fa-exclamation-triangle"></i>
+            <p><strong>Important:</strong> This tool is not a medical diagnostic system. It provides behavioral screening indicators only. Results should be reviewed by a qualified healthcare professional.</p>
+        </div>
+
+        <!-- ===== SESSION CONTROLS ===== -->
+        <div class="session-controls" id="sessionControls">
+            <button id="startSessionBtn" class="btn btn-primary btn-lg">
+                <i class="fas fa-play-circle"></i> Start Screening Session
+            </button>
+            <p class="session-info hidden" id="sessionInfo">Session ID: <span id="sessionIdDisplay">—</span></p>
+        </div>
+
+        <!-- ===== WEBCAM SECTION ===== -->
+        <div class="webcam-section hidden" id="webcamSection">
+            <div class="webcam-container">
+                <video id="webcamVideo" autoplay playsinline muted></video>
+                <canvas id="overlayCanvas"></canvas>
+                <div class="webcam-status" id="webcamStatus">Camera ready</div>
+            </div>
+            <div class="webcam-controls">
+                <button id="startCamBtn" class="btn btn-success"><i class="fas fa-video"></i> Start Webcam</button>
+                <button id="stopCamBtn" class="btn btn-danger hidden"><i class="fas fa-video-slash"></i> Stop Webcam</button>
+            </div>
+        </div>
+
+        <!-- ===== TEST PANELS ===== -->
+        <div class="test-panels hidden" id="testPanels">
+            <h2>Behavioral Tests</h2>
+            <p class="test-instructions" id="testInstructions">Select a test to begin. Ensure your face is clearly visible in the webcam.</p>
+
+            <div class="test-grid">
+                <!-- Test 1: Eye Gaze -->
+                <div class="test-card" id="testCardGaze">
+                    <div class="test-card-header">
+                        <i class="fas fa-eye"></i>
+                        <h3>Eye Gaze Tracking</h3>
+                    </div>
+                    <p>Follow the moving dot on screen. Measures gaze fixation, tracking accuracy, and blink rate.</p>
+                    <button class="btn btn-test" data-test="eye_gaze" id="startGazeTest">
+                        <i class="fas fa-play"></i> Start Test
+                    </button>
+                    <div class="test-progress hidden" id="gazeProgress">
+                        <div class="progress-bar"><div class="progress-fill" id="gazeProgressFill"></div></div>
+                        <span class="progress-text" id="gazeProgressText">0%</span>
+                    </div>
+                    <div class="test-status" id="gazeStatus"></div>
+                </div>
+
+                <!-- Test 2: Facial Expression -->
+                <div class="test-card" id="testCardExpression">
+                    <div class="test-card-header">
+                        <i class="fas fa-smile"></i>
+                        <h3>Facial Expression</h3>
+                    </div>
+                    <p>Mimic the displayed emotional expressions. Measures recognition, latency, and variability.</p>
+                    <button class="btn btn-test" data-test="facial_expression" id="startExpressionTest">
+                        <i class="fas fa-play"></i> Start Test
+                    </button>
+                    <div class="emotion-stimulus hidden" id="emotionStimulus">
+                        <div class="emotion-card" id="emotionCard">
+                            <span class="emotion-emoji" id="emotionEmoji">😊</span>
+                            <span class="emotion-label" id="emotionLabel">Happy</span>
+                            <span class="emotion-instruction" id="emotionInstruction">SMILE widely!</span>
+                        </div>
+                    </div>
+                    <div class="test-progress hidden" id="expressionProgress">
+                        <div class="progress-bar"><div class="progress-fill" id="expressionProgressFill"></div></div>
+                        <span class="progress-text" id="expressionProgressText">0%</span>
+                    </div>
+                    <div class="test-status" id="expressionStatus"></div>
+                </div>
+
+                <!-- Test 3: Head Movement -->
+                <div class="test-card" id="testCardHead">
+                    <div class="test-card-header">
+                        <i class="fas fa-arrows-alt"></i>
+                        <h3>Head Movement</h3>
+                    </div>
+                    <p>Stay naturally positioned. Detects head tilt, repetitive motion, and rocking behavior.</p>
+                    <button class="btn btn-test" data-test="head_movement" id="startHeadTest">
+                        <i class="fas fa-play"></i> Start Test
+                    </button>
+                    <div class="test-progress hidden" id="headProgress">
+                        <div class="progress-bar"><div class="progress-fill" id="headProgressFill"></div></div>
+                        <span class="progress-text" id="headProgressText">0%</span>
+                    </div>
+                    <div class="test-status" id="headStatus"></div>
+                </div>
+
+                <!-- Test 4: Reaction to Stimuli -->
+                <div class="test-card" id="testCardReaction">
+                    <div class="test-card-header">
+                        <i class="fas fa-bolt"></i>
+                        <h3>Reaction to Stimuli</h3>
+                    </div>
+                    <p>React to random shapes and sounds appearing on screen. Measures reaction time and engagement.</p>
+                    <button class="btn btn-test" data-test="reaction_stimulus" id="startReactionTest">
+                        <i class="fas fa-play"></i> Start Test
+                    </button>
+                    <div class="stimulus-display hidden" id="stimulusDisplay">
+                        <div class="stimulus-shape" id="stimulusShape"></div>
+                    </div>
+                    <div class="test-progress hidden" id="reactionProgress">
+                        <div class="progress-bar"><div class="progress-fill" id="reactionProgressFill"></div></div>
+                        <span class="progress-text" id="reactionProgressText">0%</span>
+                    </div>
+                    <div class="test-status" id="reactionStatus"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ===== ANALYZE BUTTON ===== -->
+        <div class="analyze-section hidden" id="analyzeSection">
+            <button id="analyzeBtn" class="btn btn-primary btn-lg">
+                <i class="fas fa-chart-bar"></i> Analyze Behavior & Generate Report
+            </button>
+            <div id="analyzeLoading" class="hidden">
+                <div class="spinner"></div>
+                <p>Analyzing behavioral data...</p>
+            </div>
+        </div>
+
+        <!-- ===== RESULTS DASHBOARD ===== -->
+        <div class="results-dashboard hidden" id="resultsDashboard">
+            <h2><i class="fas fa-chart-pie"></i> Screening Results</h2>
+
+            <!-- Screening Score -->
+            <div class="score-card" id="scoreCard">
+                <div class="score-circle" id="scoreCircle">
+                    <span class="score-value" id="scoreValue">—</span>
+                </div>
+                <div class="score-details">
+                    <h3 id="screeningLevel">—</h3>
+                    <p>Confidence: <span id="confidenceValue">—</span></p>
+                </div>
+            </div>
+
+            <!-- Feature Summary -->
+            <div class="features-grid" id="featuresGrid">
+                <div class="feature-item">
+                    <i class="fas fa-eye"></i>
+                    <span class="feature-label">Blink Rate</span>
+                    <span class="feature-value" id="featureBlinkRate">—</span>
+                    <span class="feature-unit">/min</span>
+                </div>
+                <div class="feature-item">
+                    <i class="fas fa-crosshairs"></i>
+                    <span class="feature-label">Gaze Fixation</span>
+                    <span class="feature-value" id="featureGazeFixation">—</span>
+                    <span class="feature-unit">ratio</span>
+                </div>
+                <div class="feature-item">
+                    <i class="fas fa-theater-masks"></i>
+                    <span class="feature-label">Emotion Variability</span>
+                    <span class="feature-value" id="featureEmotionVar">—</span>
+                    <span class="feature-unit">σ</span>
+                </div>
+                <div class="feature-item">
+                    <i class="fas fa-arrows-alt"></i>
+                    <span class="feature-label">Head Motion</span>
+                    <span class="feature-value" id="featureHeadMotion">—</span>
+                    <span class="feature-unit">var</span>
+                </div>
+                <div class="feature-item">
+                    <i class="fas fa-stopwatch"></i>
+                    <span class="feature-label">Reaction Time</span>
+                    <span class="feature-value" id="featureReactionTime">—</span>
+                    <span class="feature-unit">ms</span>
+                </div>
+                <div class="feature-item">
+                    <i class="fas fa-signal"></i>
+                    <span class="feature-label">Engagement</span>
+                    <span class="feature-value" id="featureEngagement">—</span>
+                    <span class="feature-unit">score</span>
+                </div>
+            </div>
+
+            <!-- Charts -->
+            <div class="charts-grid">
+                <div class="chart-container">
+                    <h3>Emotion Distribution</h3>
+                    <canvas id="emotionChart"></canvas>
+                </div>
+                <div class="chart-container">
+                    <h3>Reaction Times</h3>
+                    <canvas id="reactionChart"></canvas>
+                </div>
+                <div class="chart-container">
+                    <h3>Head Movement Metrics</h3>
+                    <canvas id="headMovementChart"></canvas>
+                </div>
+                <div class="chart-container">
+                    <h3>Gaze Heatmap</h3>
+                    <canvas id="gazeHeatmapCanvas" width="300" height="200"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- ===== ERROR AREA ===== -->
+        <div id="errorArea" class="error hidden"></div>
+    </main>
+
+    <!-- ===== FOOTER ===== -->
+    <footer>
+        <p><b>&copy; <span id="currentYear"></span> MediSonar. All rights reserved.</b></p>
+        <p><strong>This tool is not a medical diagnostic system. It provides behavioral screening indicators only.</strong></p>
+        <p>Results should be reviewed by a qualified healthcare professional.</p>
+    </footer>
+
+    <script src="/autism-screening-static/script.js"></script>
+</body>
+</html>
